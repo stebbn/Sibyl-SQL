@@ -1,0 +1,43 @@
+program_code,program_name,college_code
+BSCS,Bachelor of Science in Computer Science,CCS
+BSIT,Bachelor of Science in Information Technology,CCS
+BSIS,Bachelor of Science in Information Systems,CCS
+BSCE,Bachelor of Science in Civil Engineering,COE
+BSCerE,Bachelor of Science in Ceramics Engineering,COE
+BSChE,Bachelor of Science in Chemical Engineering,COE
+BSCpE,Bachelor of Science in Computer Engineering,COE
+BSECE,Bachelor of Science in Electronics & Communications Engineering,COE
+BSEE,Bachelor of Science in Electrical Engineering,COE
+BSME,Bachelor of Science in Mechanical Engineering,COE
+BSMetE,Bachelor of Science in Metallurgical Engineering,COE
+BS-EMET,Bachelor of Science in Environmental Engineering Technology,COE
+BSIAM,Bachelor of Science in Industrial Automation & Mechatronics,COE
+BSETM,Bachelor of Science in Engineering Technology Management,COE
+BSBio-Bot,Bachelor of Science in Biology (Botany),CSM
+BSBio-Zoo,Bachelor of Science in Biology (Zoology),CSM
+BSBio-Mar,Bachelor of Science in Biology (Marine),CSM
+BSBio-Gen,Bachelor of Science in Biology (General),CSM
+BSChem,Bachelor of Science in Chemistry,CSM
+BSMath,Bachelor of Science in Mathematics,CSM
+BSPhys,Bachelor of Science in Physics,CSM
+BSStat,Bachelor of Science in Statistics,CSM
+BSPsych,Bachelor of Science in Psychology,CASS
+BA-ENG,Bachelor of Arts in English,CASS
+BA-FIL,Bachelor of Arts in Filipino,CASS
+BA-HIS,Bachelor of Arts in History,CASS
+BA-POLSCI,Bachelor of Arts in Political Science,CASS
+BSA,Bachelor of Science in Accountancy,CEBA
+BSBA-BE,Bachelor of Science in Business Administration - Business Economics,CEBA
+BSBA-Econ,Bachelor of Science in Business Administration - Economics,CEBA
+BSBA-EM,Bachelor of Science in Business Administration - Entrepreneurial Marketing,CEBA
+BSHRM,Bachelor of Science in Hotel and Restaurant Management,CEBA
+BSEd-Bio,Bachelor of Secondary Education (Biology),CED
+BSEd-Chem,Bachelor of Secondary Education (Chemistry),CED
+BSEd-Phys,Bachelor of Secondary Education (Physics),CED
+BSEd-Math,Bachelor of Secondary Education (Mathematics),CED
+BSEd-MAPEH,Bachelor of Secondary Education (MAPEH),CED
+BSEd-TLE,Bachelor of Secondary Education (TLE),CED
+BEEd-Eng,Bachelor of Elementary Education (English),CED
+BSN,Bachelor of Science in Nursing,CHS
+BSDM,Bachelor in Demon Slaying,DSC
+BSCA,Bachelor of Science in Computer Applications,CCS
