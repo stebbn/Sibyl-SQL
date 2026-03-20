@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, 
                              QPushButton, QGroupBox, QSpinBox, QCheckBox, QMessageBox)
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt
+
 from modules.Settings import get_settings
 
 def prettyPrint(msg: str):
@@ -22,7 +23,7 @@ class SettingsPageFrame(QWidget):
 
         theme_layout = QHBoxLayout()
         theme_label = QLabel("Theme:")
-        theme_label.setMinimumWidth(150)
+        theme_label.setMinimumWidth(50)
 
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["Auto", "Dark", "Light"])
@@ -32,44 +33,21 @@ class SettingsPageFrame(QWidget):
         
         theme_layout.addWidget(theme_label)
         theme_layout.addWidget(self.theme_combo)
-        theme_layout.addStretch()
+        theme_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         appearance_layout.addLayout(theme_layout)
   
-        font_layout = QHBoxLayout()
-        font_label = QLabel("Font Size:")
-        font_label.setMinimumWidth(150)
-        self.font_spinbox = QSpinBox()
-        self.font_spinbox.setMinimum(8)
-        self.font_spinbox.setMaximum(16)
-        self.font_spinbox.setValue(self.settings.get("font_size", 10))
-        self.font_spinbox.setMaximumWidth(100)
-        font_layout.addWidget(font_label)
-        font_layout.addWidget(self.font_spinbox)
-        font_layout.addStretch()
-        
-        appearance_layout.addLayout(font_layout)
-        
         appearance_group.setLayout(appearance_layout)
         main_layout.addWidget(appearance_group)
 
         behavior_group = QGroupBox("Behavior")
         behavior_layout = QVBoxLayout()
 
-        self.auto_detect_check = QCheckBox("Auto-detect system theme (when theme is set to Auto)")
-        self.auto_detect_check.setChecked(self.settings.get("auto_detect_theme", True))
-        self.auto_detect_check.stateChanged.connect(self.on_auto_detect_changed)
-        behavior_layout.addWidget(self.auto_detect_check)
+        self.show_grid_check = QCheckBox("enable million dollar giver in ur bank account") # still tryna look for ideas for settings
+        self.show_grid_check.setChecked(False)
+        self.show_grid_check.stateChanged.connect(self.on_MONEYY)
 
-        self.remember_size_check = QCheckBox("Remember window size and position")
-        self.remember_size_check.setChecked(self.settings.get("remember_window_size", True))
-        self.remember_size_check.stateChanged.connect(self.on_remember_size_changed)
-        behavior_layout.addWidget(self.remember_size_check)
- 
-        self.show_grid_check = QCheckBox("Show student data as grid")
-        self.show_grid_check.setChecked(self.settings.get("show_student_grid", True))
-        self.show_grid_check.stateChanged.connect(self.on_show_grid_changed)
         behavior_layout.addWidget(self.show_grid_check)
-        
+         
         behavior_group.setLayout(behavior_layout)
         main_layout.addWidget(behavior_group)
     
@@ -83,7 +61,7 @@ class SettingsPageFrame(QWidget):
             "im larping psycho pass rn."
         )
         about_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        about_layout.addWidget(about_text)
+        about_layout.addWidget(about_text, alignment=Qt.AlignmentFlag.AlignBottom)
         
         about_group.setLayout(about_layout)
         main_layout.addWidget(about_group)
@@ -103,12 +81,9 @@ class SettingsPageFrame(QWidget):
     def on_theme_changed(self, theme: str):
        self.settings.set_theme(theme)
     
-    def on_auto_detect_changed(self, state):
-        self.settings.set("auto_detect_theme", self.auto_detect_check.isChecked())
-    
-    def on_remember_size_changed(self, state):
-        self.settings.set("remember_window_size", self.remember_size_check.isChecked())
-    
+    def on_MONEYY(self, state):
+        QMessageBox.information(None, "Title", f"MONEY {'YAY' if state else "NO!!"}")
+  
     def on_show_grid_changed(self, state):
         self.settings.set("show_student_grid", self.show_grid_check.isChecked())
     

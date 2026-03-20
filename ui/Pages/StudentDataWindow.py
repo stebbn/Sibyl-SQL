@@ -17,7 +17,7 @@ class StudentFormDialog(QDialog):
         self.entries = {}
  
         if self.is_edit:
-            self.setWindowTitle(f"Edit Student - {student_id}")
+            self.setWindowTitle(f"Edit Student")
         else:
             self.setWindowTitle("Add New Student")
         
@@ -50,6 +50,7 @@ class StudentFormDialog(QDialog):
             entry.setMinimumWidth(300)
            
             if field == "ID Number" and self.is_edit:
+                entry.setText(self.student_id)
                 entry.setReadOnly(True)
             
             form_layout.addWidget(label, i, 0)
@@ -91,22 +92,19 @@ class StudentFormDialog(QDialog):
         layout.addLayout(button_layout)
     
     def load_student_data(self):
-        prettyPrint(f"Loading student data for ID: {self.student_id}")
         search = data.FindStudentData(self.student_id)
         if search:
             self.data_id = next(iter(search))
             data_content = search[self.data_id]
             data_format = data.GetFormat("Student")
-            prettyPrint(f"Found student: {data_content}")
-   
+         
             for i, field in enumerate(fields[1:5], start=1):
                 value = data_content.get(data_format[i], "")
                 self.entries[i].setText(str(value))
-                prettyPrint(f"Loaded field {i} ({field}): {value}")
 
             gender_value = data_content.get(data_format[5], "")
             self.entries[5].setCurrentText(str(gender_value))
-            prettyPrint(f"Loaded gender: {gender_value}")
+          
         else:
             prettyPrint(f"Student {self.student_id} not found!")
             self.warn_label.setText("Student not found.")

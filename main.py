@@ -5,6 +5,7 @@ Manage student records, programs, and colleges with ease.
 
 import sys
 import traceback
+import time
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
 from PyQt6.QtGui import QIcon, QPixmap, QColor
@@ -67,7 +68,7 @@ class SibylApp(QMainWindow):
         
         # Events Binding
         self.settings.theme_changed.connect(self.apply_theme)
-       
+        
         prettyPrint("Application initialized")
     
     def switch_page(self, page_name: str):
@@ -103,12 +104,16 @@ class SibylApp(QMainWindow):
             prettyPrint(f"Theme applied: {self.settings.current_theme}")
 
 def main():
+    start_time = time.perf_counter()
     app = QApplication(sys.argv)
 
     app.setStyleSheet(get_style())
 
     window = SibylApp()
     window.show()
+
+    prettyPrint(f"Init load took {time.perf_counter() - start_time:.4f} seconds.")
+
     sys.exit(app.exec())
 
 def except_hook(cls, exception, traceback):
@@ -116,14 +121,5 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == "__main__":
     sys.excepthook = except_hook
+    
     main()
-
-# installation with pyinstaller:
-
-"""
-pyinstaller -w -F `
---add-data "ui/Assets;ui/Assets" `
---add-data "data;data" `
--i "ui/Assets/APP_ICON.ico" `
--n "SYBL" main.py `
-"""

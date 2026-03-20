@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, 
                              QLineEdit, QLabel, QComboBox, QPushButton, QMenu, QTextEdit, 
-                             QHeaderView, QAbstractItemView, QMessageBox, QFrame, QScrollArea, QGroupBox)
+                             QHeaderView, QAbstractItemView, QMessageBox, QFrame, QStyledItemDelegate, QGroupBox)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
@@ -11,6 +11,15 @@ from ui.Pages.StudentDataWindow import StudentFormDialog
 
 def prettyPrint(msg: str): 
     print("[DATA_REG]:", msg)
+
+class RowColorDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        custom_bg = index.data(Qt.ItemDataRole.UserRole)
+      
+        if custom_bg:
+            painter.fillRect(option.rect, QColor(custom_bg))
+            
+        super().paint(painter, option, index)
 
 class DataPageFrame(QWidget):
     def __init__(self):
@@ -35,11 +44,9 @@ class DataPageFrame(QWidget):
         search_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         search_layout.setSpacing(5)
         search_layout.addWidget(QLabel("Search:"))
-        
-        self.search_var = ""
+
         self.search_entry = QLineEdit()
         self.search_entry.setPlaceholderText("Type to search...")
-        self.search_entry.textChanged.connect(self.update_list)
         self.search_entry.setMaximumHeight(32)
        
         self.search_field = QComboBox()
@@ -48,6 +55,12 @@ class DataPageFrame(QWidget):
         self.search_field.setMaximumWidth(150)
         self.search_field.setMaximumHeight(32)
        
+        search_btn = QPushButton("Search")
+        search_btn.setObjectName("SelectionButton")
+        search_btn.setMaximumWidth(100)
+        search_btn.setMaximumHeight(50)
+        search_btn.clicked.connect(self.update_list)
+
         clear_btn = QPushButton("Clear")
         clear_btn.setObjectName("SelectionButton")
         clear_btn.setMaximumWidth(100)
@@ -66,17 +79,22 @@ class DataPageFrame(QWidget):
         search_layout.addWidget(QLabel("Field:"))
         search_layout.addWidget(self.search_field)
 
+        toolbar_layout.addWidget(search_btn)
         toolbar_layout.addWidget(clear_btn)
         toolbar_layout.addWidget(add_btn)
         
         main_layout.addWidget(toolbar_container)
 
         self.tree = QTableWidget()
+        self.tree.setMaximumWidth(1200)
         self.tree.setColumnCount(6)
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
         self.tree.setHorizontalHeaderLabels(["ID No.", "First Name", "Last Name", "Program", "Year", "Gender"])
+
+        self.delegate = RowColorDelegate(self.tree)
+        self.tree.setItemDelegate(self.delegate)
 
         header = self.tree.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -129,9 +147,6 @@ class DataPageFrame(QWidget):
             self.reverse_sort = False
         
         self.show_info(self.search_entry.text())
-        prettyPrint(f"Sorted by {self.sort_column_name} ({'descending' if self.reverse_sort else 'ascending'})")
-    
-    
     
     def on_tree_select(self):
         selected_items = self.tree.selectedItems()
@@ -160,14 +175,15 @@ class DataPageFrame(QWidget):
             self.display_box.setHtml(html_text)
     
     def update_list(self):
-        search_term = self.search_var
-        self.show_info(search_term)
+        if not self.search_entry.text(): return
+        
+        self.show_info(self.search_entry.text())
     
     def show_info(self, search_query=""):
         self.tree.setRowCount(0)
         
         student_records = data.student_data
-        prettyPrint(f"show_info called with {len(student_records)} records")
+        
         search_query = search_query.lower()
         field_filter = self.search_field.currentText()
         
@@ -190,25 +206,27 @@ class DataPageFrame(QWidget):
                 row = self.tree.rowCount()
                 self.tree.insertRow(row)
                 
-                # Create items
-                id_item = QTableWidgetItem(student_id)
+                id_item         = QTableWidgetItem(student_id)
                 first_name_item = QTableWidgetItem(value.get("first_name", ""))
-                last_name_item = QTableWidgetItem(value.get("last_name", ""))
-                program_item = QTableWidgetItem(value.get("program_code", ""))
-                year_item = QTableWidgetItem(str(value.get("year", "")))
-                gender_item = QTableWidgetItem(value.get("gender", ""))
+                last_name_item  = QTableWidgetItem(value.get("last_name", ""))
+                program_item    = QTableWidgetItem(value.get("program_code", ""))
+                year_item       = QTableWidgetItem(str(value.get("year", "")))
+                gender_item     = QTableWidgetItem(value.get("gender", ""))
                 
-                if row == 0:  # Debug first row
+                if row == 0: 
                     prettyPrint(f"First row values: ID={student_id}, Name={value.get('first_name', '')} {value.get('last_name', '')}")
-                
-                # Check program validity and set colors
+              
                 prog_stat = data.get_college_by_program(value.get("program_code", ""))
+
                 if prog_stat == "invalid program code":
+                    prettyPrint(f"warning: {student_id}")
                     for item in [id_item, first_name_item, last_name_item, program_item, year_item, gender_item]:
-                        item.setForeground(QColor("#FF6B6B"))
+                        item.setData(Qt.ItemDataRole.UserRole, "#DDD239")
                 elif prog_stat == "College Not Found":
+                    prettyPrint(f"error: {student_id}")
                     for item in [id_item, first_name_item, last_name_item, program_item, year_item, gender_item]:
-                        item.setForeground(QColor("#FFDC6B"))
+                        item.setData(Qt.ItemDataRole.UserRole, "#DD3939")
+                    
                 
                 self.tree.setItem(row, 0, id_item)
                 self.tree.setItem(row, 1, first_name_item)
@@ -219,14 +237,13 @@ class DataPageFrame(QWidget):
         
         prettyPrint(f"Added {self.tree.rowCount()} rows to table")
         self.sort_column(self.current_sort, self.reverse_sort)
-        
-        # Update status bar
+ 
         total = len(data.student_data)
         shown = self.tree.rowCount()
         if search_query:
-            self.status_label.setText(f"📊 Showing {shown} of {total} students • Sorted by {self.sort_column_name}")
+            self.status_label.setText(f"Showing {shown} of {total} students • Sorted by {self.sort_column_name}: {'Descending' if self.reverse_sort else 'Ascending'}")
         else:
-            self.status_label.setText(f"📊 Total {total} students • Sorted by {self.sort_column_name}")
+            self.status_label.setText(f"Total {total} students • Sorted by {self.sort_column_name}: {'Descending' if self.reverse_sort else 'Ascending'}")
     
     def show_context_menu(self, position):
         item = self.tree.itemAt(position)
@@ -238,32 +255,26 @@ class DataPageFrame(QWidget):
             menu.exec(self.tree.mapToGlobal(position))
     
     def sort_column(self, col, reverse):
-        # Get all rows
-        rows = []
+        row_data_list = []
         for row in range(self.tree.rowCount()):
-            row_data = []
+            current_row_items = []
             for col_idx in range(self.tree.columnCount()):
                 item = self.tree.item(row, col_idx)
-                row_data.append((item.text() if item else "", row))
-            rows.append(row_data)
-        
-        # Sort based on column
+                current_row_items.append(item.clone() if item else QTableWidgetItem(""))
+            row_data_list.append(current_row_items)
+
         try:
-            rows.sort(key=lambda x: int(x[col][0].split('-')[0]) if '-' in x[col][0] else int(x[col][0]), 
-                     reverse=reverse)
+            row_data_list.sort(
+                key=lambda items: int(items[col].text().split('-')[0]) if '-' in items[col].text() else int(items[col].text()), 
+                reverse=reverse
+            )
         except (ValueError, IndexError):
-            rows.sort(key=lambda x: x[col][0].lower(), reverse=reverse)
-        
-        # Store sorted data and restore to table
-        for new_row, row_data in enumerate(rows):
-            for col_idx, (text, old_row) in enumerate(row_data):
-                item = self.tree.item(old_row, col_idx)
-                if item:
-                    # Create a new item with existing data
-                    new_item = QTableWidgetItem(text)
-                    # Preserve any formatting (colors, etc.)
-                    new_item.setForeground(item.foreground())
-                    self.tree.setItem(new_row, col_idx, new_item)
+            row_data_list.sort(key=lambda items: items[col].text().lower(), reverse=reverse)
+        self.tree.setRowCount(0)
+        for new_row, items in enumerate(row_data_list):
+            self.tree.insertRow(new_row)
+            for col_idx, item in enumerate(items):
+                self.tree.setItem(new_row, col_idx, item)
         
         self.current_sort = col
         self.reverse_sort = reverse
@@ -276,14 +287,11 @@ class DataPageFrame(QWidget):
             self.show_info()
     
     def open_edit_student_window(self, student_id: str):
-        prettyPrint(f"Opening edit dialog for student: {student_id}")
-
         dialog = StudentFormDialog(self, student_id=student_id)
         center_window(dialog, dialog.width(), dialog.height())
 
-        prettyPrint(f"Dialog created and centered, executing...")
         result = dialog.exec()
-        prettyPrint(f"Dialog result: {result}")
+
         if result == StudentFormDialog.DialogCode.Accepted:
             self.show_info()
     

@@ -35,14 +35,14 @@ class SettingsManager(QObject):
             "foreground": "#313131",
             "accent": "rgba(100, 200, 255, 100)",
             "secondary_bg": "#181717",
-            "border": "#404040",
+            "border": "#242323",
         },
         "Light": {
             "background": "#ECECEC",
             "foreground": "#CECECE",
             "accent": "rgba(70, 150, 220, 100)",
             "secondary_bg": "#F5F5F5",
-            "border": "#D0D0D0",
+            "border": "#BBB9B9",
         }
     }
     

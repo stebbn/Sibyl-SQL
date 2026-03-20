@@ -114,7 +114,7 @@ def SyncAll():
         return {row['program_code']: {"name": row[dataFormat["Program"][1]], "college": row[dataFormat["Program"][2]]} for row in reader}
     program_data = LoadCSV(programs_path, program_cb)
 
-    prettyPrint(f"Total load took {time.perf_counter() - start:.4f} seconds.")
+    prettyPrint(f"Total data load took {time.perf_counter() - start:.4f} seconds.")
 
 def SaveData(type: Literal["Student", "College", "Program"], data_dict: dict) -> bool:
     start = time.perf_counter()
