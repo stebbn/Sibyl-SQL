@@ -55,7 +55,7 @@ class SettingsPageFrame(QWidget):
         about_layout = QVBoxLayout()
         
         about_text = QLabel(
-            "Sibyl v1.0.0\n\n"
+            "Sibyl v2.0.0\n\n"
             "A Student Information System\n\n"
             "© 2026 - All rights reserved\n\n"
             "im larping psycho pass rn."
