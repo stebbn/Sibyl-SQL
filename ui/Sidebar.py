@@ -2,11 +2,11 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QFrame
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QPixmap, QColor, QIcon
 
-from modules.Data import resource_path
+from modules.DataSQL import resource_path
 from modules.utils import processImage
 from modules.Settings import get_settings
 
-import modules.Data as data
+import modules.DataSQL as data
 
 def prettyPrint(msg: str): 
     print("[SIDEBAR]:", msg)

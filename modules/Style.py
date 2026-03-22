@@ -95,6 +95,10 @@ QPushButton[selected="true"]:hover {{
 }}
 #SelectionButton:hover {{ background-color: rgba(100, 200, 255, 0.15); }}
 #SelectionButton[selected="true"] {{ background-color: rgba(100, 200, 255, 0.3); }}
+#SelectionButton:checked {{
+                background-color: rgba(100, 200, 255, 0.3); 
+                font-weight: bold; 
+            }}
 
 /* ----------------------- INPUT FIELDS ----------------------- */
 QLineEdit {{

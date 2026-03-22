@@ -8,10 +8,9 @@ import traceback
 import time
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
-from PyQt6.QtGui import QIcon, QPixmap, QColor
-from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 
-from modules.Data import resource_path
+from modules.DataSQL import resource_path
 from modules.utils import center_window, get_style
 from modules.Settings import get_settings
 
@@ -121,5 +120,5 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == "__main__":
     sys.excepthook = except_hook
-    
+
     main()

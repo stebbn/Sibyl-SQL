@@ -3,7 +3,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QTab
                              QComboBox, QMessageBox, QMenu, QHeaderView, QAbstractItemView)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-import modules.Data as data
+
+import modules.DataSQL as data
 
 def prettyPrint(msg: str): 
     print("[COLLEGE_PAGE]:", msg)
@@ -32,6 +33,8 @@ class CollegeTab(QWidget):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout.setContentsMargins(0, 3, 0, 0)
+
+        self.data = data.db.query_college()
         
         toolbar_container = QWidget()
 
@@ -95,12 +98,19 @@ class CollegeTab(QWidget):
         self.current_sort = col
         self.reverse_sort = reverse
     
+    def update_data(self):
+        self.data = data.db.query_college()
+
     def refresh(self):
         self.tree.setRowCount(0)
+        self.update_data()
         
-        for code, name in data.college_data.items():
+        for college in self.data:
             row = self.tree.rowCount()
             self.tree.insertRow(row)
+
+            code = str(college["college_code"])  
+            name = str(college["college_name"])
             
             item_code = QTableWidgetItem(code)
             item_name = QTableWidgetItem(name)
@@ -141,7 +151,9 @@ class CollegeTab(QWidget):
 class ProgramTab(QWidget):
     def __init__(self):
         super().__init__()
-        
+
+        self.data = data.db.query_programs()
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 3, 0, 0)
         
@@ -207,13 +219,17 @@ class ProgramTab(QWidget):
     def refresh(self):
         self.tree.setRowCount(0)
         
-        for code, info in data.program_data.items():
+        for program in self.data:
             row = self.tree.rowCount()
             self.tree.insertRow(row)
+
+            code = str(program["program_code"])
+            name = str(program["program_name"])
+            col_code = str(program["college_code"])
             
             item_code = QTableWidgetItem(code)
-            item_name = QTableWidgetItem(info[0] if isinstance(info, tuple) else info.get('name', ''))
-            item_college = QTableWidgetItem(info[1] if isinstance(info, tuple) else info.get('college', ''))
+            item_name = QTableWidgetItem(name)
+            item_college = QTableWidgetItem(col_code)
             
             self.tree.setItem(row, 0, item_code)
             self.tree.setItem(row, 1, item_name)

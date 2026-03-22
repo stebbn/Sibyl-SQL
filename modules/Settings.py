@@ -5,7 +5,7 @@ import darkdetect
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from typing import Any, Dict
-from modules.Data import resource_path
+from modules.DataSQL import resource_path
 
 def prettyPrint(msg):
     print("[SETTINGS]:", msg)

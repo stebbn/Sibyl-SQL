@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QGridLayout, QLabel, QLineEdit, 
                              QComboBox, QPushButton, QHBoxLayout)
 from PyQt6.QtCore import Qt
-import modules.Data as data
+import modules.DataSQL as data
 
 def prettyPrint(msg: str):
     print("[STUDENT_FORM]:", msg)
