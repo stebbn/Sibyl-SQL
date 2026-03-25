@@ -1,5 +1,5 @@
-import sys
-import os
+import pygame
+
 from PIL import Image, ImageOps
 
 from PyQt6.QtCore import Qt, QSize
@@ -21,6 +21,12 @@ def processImage(file_loc, w, h, dark_mode_invert=False) -> QPixmap:
     data = og_img.tobytes("raw", "RGBA")
     q_img = QImage(data, w, h, QImage.Format.Format_RGBA8888)
     return QPixmap.fromImage(q_img)
+
+pygame.mixer.init() 
+def play_sound(path):
+
+    sound_effect = pygame.mixer.Sound(path)
+    sound_effect.play()
 
 def get_style() -> str:
     return generate_stylesheet()

@@ -37,34 +37,68 @@ class DatabaseManager:
         self.Settings = {
             "MaxPageSize" : 50,
         }
-        self.Pages    = None
+        self.infos    = {
+            "students": {
+                "Pages" : 0,
+                "Total" : 0
+            },
 
-        self.loaded_data = {
+            "colleges": {
+                "Pages" : 0,
+                "Total" : 0
+            },
 
+            "programs": {
+                "Pages" : 0,
+                "Total" : 0
+            }
         }
 
         self._initialize_database()
         self._load_pages()
    
     def _load_pages(self):
-        self.Pages    = {
-            "students"     : self._calculate_pages("students")
-        }
+        self.infos["students"]["Pages"] = self._calculate_pages("students")
+        self.infos["colleges"]["Pages"] = self._calculate_pages("colleges")
+        self.infos["programs"]["Pages"] = self._calculate_pages("programs")
 
     def _get_pages(self, table):
-        if self.Pages[table]: return self.Pages[table]
-        prettyPrint("unknown data table:", table)
+        tables = self.infos.get(table)
+        value = tables.get("Pages")
 
+        if value: return self.infos[table]["Pages"]
+        prettyPrint(f"get pages error: {table}, {tables} {value}")
+        return None
+    
+    def _get_table_val(self, table, val):
+        table = self.infos.get(table)
+        value = table.get(val)
+        if table and value: return value
+        prettyPrint(f"get error: {table}, {val}")
         return None
 
-    def _calculate_pages(self, table):
+    def _calculate_pages(self, table, search="", search_field=None):
         try:
             with self._get_connection() as conn:
-                cursor = conn.execute(f"SELECT COUNT(*) FROM {table}")
-                return math.ceil(cursor.fetchone()[0] / self.Settings["MaxPageSize"])
+                if search and search_field:
+                    query = f"SELECT COUNT(*) FROM {table} WHERE {search_field} LIKE ?"
+                    search_term = f"{search}%"
+                    cursor = conn.execute(query, (search_term,))
+                else:
+                    query = f"SELECT COUNT(*) FROM {table}"
+                    cursor = conn.execute(query)
+               
+                total_count = int(cursor.fetchone()[0])
+              
+                if not search:
+                    self.infos[table]["Total"] = total_count
+             
+                calculated_pages = math.ceil(total_count / self.Settings["MaxPageSize"])
+                return max(1, calculated_pages)
+                
         except Exception as e:
-            prettyPrint(f"Error: {e}")
-            return []
+            prettyPrint(f"Error calculating pages for {table}: {e}")
+            return 1
 
     def _get_connection(self):
         conn = sqlite3.connect(self.db_path)
@@ -102,31 +136,36 @@ class DatabaseManager:
         except Exception as e:
             prettyPrint(f"Error init database: {e}")
 
-    def query_students(self, page = 1, sort = "id_number", asc = True):
+    def query_students(self, search="", search_field="id_number", page=1, sort="id_number", asc=True):
         start_time = time.perf_counter()
 
         try:
             with self._get_connection() as conn:
                 max_page = self.Settings["MaxPageSize"]
                 offset   = (page - 1) * max_page
-                
                 sort_dir = "ASC" if asc else "DESC"
+
+                search_term = f"{search}%"
+              
+                search_max_page = self._calculate_pages("students", search, search_field)
+                self.infos["students"]["Pages"] = search_max_page
 
                 cursor = conn.execute(f"""
                                         SELECT id_number, first_name, last_name, year_level, gender, program_code 
                                         FROM students
+                                        WHERE {search_field} LIKE ?
                                         ORDER BY {sort} {sort_dir}
                                         LIMIT ? OFFSET ?
                                         """,
-                                        (max_page, offset) 
+                                        (search_term, max_page, offset) 
                                      )
 
                 prettyPrint(f"current student queue time: {time.perf_counter() - start_time}")
-
-                return [dict(row) for row in cursor.fetchall()]
+                return [dict(row) for row in cursor.fetchall()], search_max_page
+                
         except Exception as e:
             prettyPrint(f"Error fetching students: {e}")
-            return []
+            return [], 1
 
     def query_college(self):
         try:
@@ -146,9 +185,6 @@ class DatabaseManager:
             prettyPrint(f"Error fetching programs: {e}")
             return []
         
-    #--------------------------------------------------------------#
-    def update_data(con, storage, query):
-        return 1
 
 db = DatabaseManager()
 

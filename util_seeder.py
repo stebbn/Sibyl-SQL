@@ -126,7 +126,7 @@ def run_seeder(student_count):
     students_to_insert = []
     
     for i in range(1, student_count + 1):
-        id_num = f"2024-{i:04d}" 
+        id_num = f"202{random.randint(4,6)}-{i:04d}" 
         is_male = random.choice([True, False])
         gender = "Male" if is_male else "Female"
         
@@ -152,4 +152,4 @@ def run_seeder(student_count):
         print(f"Database error during seed: {e}")
 
 if __name__ == "__main__":
-    run_seeder(3000)
+    run_seeder(20000)

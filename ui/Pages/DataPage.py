@@ -1,3 +1,5 @@
+import math
+
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, 
                              QLineEdit, QLabel, QComboBox, QPushButton, QMenu, QTextEdit, 
                              QHeaderView, QAbstractItemView, QMessageBox, QButtonGroup, QStyledItemDelegate, QGroupBox)
@@ -5,7 +7,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
 import modules.DataSQL as data
-from modules.utils import center_window
+
+from modules.utils import center_window, play_sound
 from ui.Pages.StudentDataWindow import StudentFormDialog
 
 def prettyPrint(msg: str): 
@@ -27,12 +30,22 @@ class DataPageFrame(QWidget):
         self.data = []
         self.max_page_ye  = 10 # total page buttons to per ye
         self.current_page = 1
-        self.total_pages  = None
+        self.page_offset  = None
+        self.total_pages  = data.db._get_pages("students") or 1
         self.page_buttons = {}
 
         self.current_sort = 0
         self.reverse_sort = False
         self.right_clicked_row = None
+        self.sort_columns_map  = {
+            "ID No."        : "id_number", 
+            "First Name"    : "first_name", 
+            "Last Name"     : "last_name", 
+            "Program"       : "year_level",
+            "Year"          : "gender", 
+            "Gender"        : "program_code"
+        }
+
         self.sort_column_name = "ID No." 
         
         main_layout = QVBoxLayout(self)
@@ -54,7 +67,7 @@ class DataPageFrame(QWidget):
         self.search_entry.setMaximumHeight(32)
        
         self.search_field = QComboBox()
-        self.search_field.addItems(["Match", "ID No.", "First Name", "Last Name", "Program", "Year", "Gender"])
+        self.search_field.addItems(["ID No.", "First Name", "Last Name", "Program", "Year", "Gender"])
         self.search_field.currentTextChanged.connect(self.update_list)
         self.search_field.setMaximumWidth(150)
         self.search_field.setMaximumHeight(32)
@@ -89,14 +102,17 @@ class DataPageFrame(QWidget):
         self.tree.setItemDelegate(self.delegate)
 
         header = self.tree.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        
+        header.setDefaultSectionSize(100)
+
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.verticalHeader().setVisible(False)
+
         self.tree.customContextMenuRequested.connect(self.show_context_menu)
         self.tree.itemSelectionChanged.connect(self.on_tree_select)
         self.tree.horizontalHeader().sectionClicked.connect(self.on_header_clicked)
@@ -110,10 +126,10 @@ class DataPageFrame(QWidget):
         self.first_page = self.make_page_button("<<")
         self.last_page  = self.make_page_button(">>")
 
-        self.back_page.clicked.connect(lambda: self.switch_page("prev"))
-        self.next_page.clicked.connect(lambda: self.switch_page("next"))
-        self.first_page.clicked.connect(lambda: self.switch_page("first"))
-        self.last_page.clicked.connect(lambda: self.switch_page("last"))
+        self.back_page.clicked.connect(lambda: self.page_button_pressed("prev"))
+        self.next_page.clicked.connect(lambda: self.page_button_pressed("next"))
+        self.first_page.clicked.connect(lambda: self.page_button_pressed("first"))
+        self.last_page.clicked.connect(lambda: self.page_button_pressed("last"))
 
         page_front = QHBoxLayout()
         page_front.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -126,7 +142,7 @@ class DataPageFrame(QWidget):
    
         self.page_button_group = QButtonGroup(self)
         self.page_button_group.setExclusive(True)
-        self.page_button_group.idClicked.connect(self.switch_page)
+        self.page_button_group.idClicked.connect(self.page_button_pressed)
 
         page_end = QHBoxLayout()
         page_end.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -175,40 +191,64 @@ class DataPageFrame(QWidget):
         main_layout.addWidget(self.info_frame)
         main_layout.addWidget(self.status_label)
         
-        self.show_info()
+        self.show_info(self.search_entry.text())
 
     def switch_page(self, val):
-        prettyPrint(val)
+        val_edit = max(1, min(val, self.total_pages)) 
+        if self.current_page == val_edit : prettyPrint("same page"); return
+
+        self.current_page = val_edit
+        self.show_info(self.search_entry.text())  
+        self.load_page_buttons()
+    
+    def page_button_pressed(self, val):
+        assert(isinstance(val, str) or isinstance(val, int), "???")
+        if type(val) is str: 
+            if   val == "first": val = 1
+            elif val == "prev" : val = self.current_page - 1
+            elif val == "next" : val = self.current_page + 1
+            elif val == "last" : val = self.total_pages       # this sucks
+            else: prettyPrint(f"unknown str val: {val}"); return
+        
+        self.switch_page(val)
+        play_sound(data.resource_path("ui/Assets/Sounds/button_click.wav"))
 
     def make_page_button(self, n):
         page_b = QPushButton(str(n))
         page_b.setObjectName("SelectionButton")
-        page_b.setMinimumHeight(45)
-        page_b.setMinimumWidth(10)
+        page_b.setFixedHeight(45)
+        page_b.setFixedWidth(40)
         page_b.setStyleSheet("text-align: center;")
         return page_b
 
     def load_page_buttons(self):
-        for button in self.page_button_group.buttons():
-            self.page_button_group.removeButton(button)
-            self.page_button_layout.removeWidget(button)
-            button.deleteLater()
+        if not getattr(self, "total_pages", None):
+            self.total_pages = 1
+
+        chunk = ((self.current_page - 1) // self.max_page_ye) * self.max_page_ye + 1
+
+        if (getattr(self, "page_offset", None) != chunk) or (getattr(self, "last_total_pages", None) != self.total_pages):
             
-        self.total_pages = data.db._get_pages("students") or 1
-   
-        max_range = self.total_pages
-        if self.total_pages >= self.max_page_ye:
-            max_range = self.max_page_ye
-        
-        for page_count in range(1, max_range + 1):
-            btn = self.make_page_button(page_count)
-            btn.setCheckable(True)
-            self.page_button_layout.addWidget(btn)
-           
-            self.page_button_group.addButton(btn, id=page_count)
-          
-            if page_count == self.current_page:
-                btn.setChecked(True)
+            for button in self.page_button_group.buttons():
+                self.page_button_group.removeButton(button)
+                self.page_button_layout.removeWidget(button)
+                button.deleteLater()
+            
+            self.page_offset = chunk   
+            self.last_total_pages = self.total_pages
+            
+            chunk_end = min(self.total_pages, chunk + self.max_page_ye - 1)
+       
+            for page_count in range(chunk, chunk_end + 1):
+                btn = self.make_page_button(page_count)
+                btn.setCheckable(True)
+
+                self.page_button_layout.addWidget(btn)
+                self.page_button_group.addButton(btn, id=page_count)
+
+        active_btn = self.page_button_group.button(self.current_page)
+        if active_btn:
+            active_btn.setChecked(True)
     
     def clear_search(self):
         self.search_entry.clear()
@@ -217,10 +257,11 @@ class DataPageFrame(QWidget):
     
     def update_list(self):
         search_term = self.search_entry.text()
+        self.current_page = 1
         self.show_info(search_term)
     
     def on_header_clicked(self, col):
-        col_names = ["ID No.", "First Name", "Last Name", "Program", "Year", "Gender"]
+        col_names = list(self.sort_columns_map.keys())
         self.sort_column_name = col_names[col] if col < len(col_names) else col_names[0]
 
         if self.current_sort == col:
@@ -267,11 +308,21 @@ class DataPageFrame(QWidget):
             break
     
     def show_info(self, search_query=""):
-        self.data = data.db.query_students()
-        self.tree.setRowCount(0)
 
         search_query = search_query.lower()
         field_filter = self.search_field.currentText()
+        filtered_field = self.sort_columns_map.get(field_filter) or None
+
+        if not filtered_field: prettyPrint(f"error on field filter {filtered_field}")
+
+        self.data, self.total_pages = data.db.query_students(
+                                        search          = search_query, 
+                                        search_field    = filtered_field, 
+                                        page            = self.current_page, 
+                                        sort            = self.sort_columns_map.get(self.sort_column_name)
+                                    )
+        self.tree.setRowCount(0)
+        self.load_page_buttons()
         
         for students in self.data:
             student_id = str(students["id_number"])
@@ -290,10 +341,7 @@ class DataPageFrame(QWidget):
                 "Gender"        : gender,
             }
 
-            if field_filter == "Match":
-                target_text = f"{student_id} {' '.join(str(v) for v in students.values())}".lower()
-            else:
-                target_text = str(field_map.get(field_filter, "")).lower()
+            target_text = str(field_map.get(field_filter, "")).lower()
             
             if not search_query or search_query in target_text:
                 row = self.tree.rowCount()
@@ -324,6 +372,8 @@ class DataPageFrame(QWidget):
                 self.tree.setItem(row, 4, year_item)
                 self.tree.setItem(row, 5, gender_item)
         
+        self.status_label.setText(f"Total Students: {data.db._get_table_val("students", "Total")} | Total Pages: {self.total_pages}")
+
         prettyPrint(f"Added {self.tree.rowCount()} rows to table")
         self.sort_column(self.current_sort, self.reverse_sort)
  
@@ -367,14 +417,14 @@ class DataPageFrame(QWidget):
         center_window(dialog, dialog.width(), dialog.height())
 
         if dialog.exec() == StudentFormDialog.DialogCode.Accepted:
-            self.show_info()
+            self.show_info(self.search_entry.text())
     
     def open_edit_student_window(self, student_id: str):
         dialog = StudentFormDialog(self, student_id=student_id)
         center_window(dialog, dialog.width(), dialog.height())
 
         if dialog.exec() == StudentFormDialog.DialogCode.Accepted:
-            self.show_info()
+            self.show_info(self.search_entry.text())
     
     def edit_student(self):
         row = self.right_clicked_row if self.right_clicked_row is not None else self.tree.currentRow()
@@ -392,7 +442,7 @@ class DataPageFrame(QWidget):
                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if reply == QMessageBox.StandardButton.Yes:
                 if data.DeleteStudent(student_id):
-                    self.show_info()
+                    self.show_info(self.search_entry.text())
             self.right_clicked_row = None
         else:
             prettyPrint("did not select anything")

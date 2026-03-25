@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
 from PyQt6.QtGui import QIcon
 
 from modules.DataSQL import resource_path
-from modules.utils import center_window, get_style
+from modules.utils import center_window, get_style, play_sound
 from modules.Settings import get_settings
 
 from ui import SidebarFrame
@@ -21,10 +21,9 @@ def prettyPrint(msg: str):
     print("[Main]:", msg)
 
 class SibylApp(QMainWindow):
-    
     def __init__(self):
         super().__init__()
-        
+       
         self.settings = get_settings()
         config = self.settings.get_static()
 
@@ -65,7 +64,6 @@ class SibylApp(QMainWindow):
         self.switch_page(self.starter_page)
         self.sidebar.update_selected(self.starter_page)
         
-        # Events Binding
         self.settings.theme_changed.connect(self.apply_theme)
         
         prettyPrint("Application initialized")
@@ -84,7 +82,8 @@ class SibylApp(QMainWindow):
                 self.current_page = page_class()
                 self.page_container_layout.addWidget(self.current_page)
                 self.current_page_name = page_name
-
+                
+                play_sound(resource_path("ui/Assets/Sounds/button_click2.wav"))
                 prettyPrint(f"Switched to {page_name}")
             else:
                 if page_class:
@@ -110,6 +109,7 @@ def main():
 
     window = SibylApp()
     window.show()
+    play_sound(resource_path("ui/Assets/Sounds/sibyl_start.wav"))
 
     prettyPrint(f"Init load took {time.perf_counter() - start_time:.4f} seconds.")
 
@@ -120,5 +120,6 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == "__main__":
     sys.excepthook = except_hook
-
     main()
+
+# longest 6.9624s
