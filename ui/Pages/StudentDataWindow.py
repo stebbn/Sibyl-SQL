@@ -101,6 +101,7 @@ class StudentFormDialog(QDialog):
             for i, field in enumerate(fields[1:5], start=1):
                 value = data_content.get(data_format[i], "")
                 self.entries[i].setText(str(value))
+                prettyPrint(f"{i} {data_format[i]} {value}: {field}")
 
             gender_value = data_content.get(data_format[5], "")
             self.entries[5].setCurrentText(str(gender_value))

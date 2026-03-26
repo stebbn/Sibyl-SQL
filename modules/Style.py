@@ -166,6 +166,14 @@ QSpinBox:focus {{
     padding: 5px;
 }}
 
+QSpinBox::up-button {{
+    width: 25px;
+}}
+
+QSpinBox::down-button {{
+    width: 25px;
+}}
+
 /* ----------------------- LABELS ----------------------- */
 QLabel {{
     color: {text_color};

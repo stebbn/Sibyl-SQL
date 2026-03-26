@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QFrame
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QPixmap, QColor, QIcon
 
-from modules.DataSQL import resource_path
+from modules.appFileHandler import resource_path
 from modules.utils import processImage
 from modules.Settings import get_settings
 

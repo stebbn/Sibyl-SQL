@@ -6,6 +6,7 @@ import math
 
 import time
 
+from modules.Settings import get_settings
 from typing import Literal
 
 def prettyPrint(msg):
@@ -34,9 +35,8 @@ dataFormat = {
 class DatabaseManager:
     def __init__(self):
         self.db_path  = get_save_path("university.db")
-        self.Settings = {
-            "MaxPageSize" : 50,
-        }
+        self.settings_module = get_settings()
+
         self.infos    = {
             "students": {
                 "Pages" : 0,
@@ -61,6 +61,7 @@ class DatabaseManager:
         self.infos["students"]["Pages"] = self._calculate_pages("students")
         self.infos["colleges"]["Pages"] = self._calculate_pages("colleges")
         self.infos["programs"]["Pages"] = self._calculate_pages("programs")
+
 
     def _get_pages(self, table):
         tables = self.infos.get(table)
@@ -93,7 +94,7 @@ class DatabaseManager:
                 if not search:
                     self.infos[table]["Total"] = total_count
              
-                calculated_pages = math.ceil(total_count / self.Settings["MaxPageSize"])
+                calculated_pages = math.ceil(total_count / self.settings_module.settings.get("page_content_size"))
                 return max(1, calculated_pages)
                 
         except Exception as e:
@@ -141,7 +142,7 @@ class DatabaseManager:
 
         try:
             with self._get_connection() as conn:
-                max_page = self.Settings["MaxPageSize"]
+                max_page = self.settings_module.settings.get("page_content_size")
                 offset   = (page - 1) * max_page
                 sort_dir = "ASC" if asc else "DESC"
 
@@ -160,7 +161,7 @@ class DatabaseManager:
                                         (search_term, max_page, offset) 
                                      )
 
-                prettyPrint(f"current student queue time: {time.perf_counter() - start_time}")
+                prettyPrint(f"queued: {search_term}, {search_field}, {page}, {sort}, {sort_dir} | time: {time.perf_counter() - start_time}")
                 return [dict(row) for row in cursor.fetchall()], search_max_page
                 
         except Exception as e:
@@ -215,9 +216,9 @@ def VerifyFormat(data_type : str, user_input : str, name : str) -> list[bool, st
         if not re.match(r"^\d{4}-\d{4}$", val):
             return [False, "Format: 0000-0000"]
         year = int(val.split("-")[0])
-        if 2000 <= year <= 2026:
+        if 2023 <= year <= 2026:
             return [True, val]
-        return [False, "Year must be 2000-2026"]
+        return [False, "Year must be 2023-2026"]
 
     elif data_type in (student_format[1], student_format[2]):
         if all(x.isalpha() or x.isspace() for x in val):
@@ -399,25 +400,14 @@ def FindStudentData(student_id : str) -> bool | dict:
             cursor = conn.execute(query, (student_id,))
             result = cursor.fetchone()
             if result:
+
                 return {
                     result['id_number']: {
-                        'first_name': result['first_name'],
-                        'last_name': result['last_name'],
-                        'program_code': result['program_code'],
-                        'year': str(result['year_level']),
-                        'gender': result['gender']
+                        key: result[key] for key in dataFormat['Student'][1:]
                     }
-                }
+                }               
     except Exception as e:
         prettyPrint(f"Error finding student: {e}")
     return False
 
 def GetFormat(type : Literal["Student", "College", "Program"]) -> dict : return dataFormat[type]
-
-def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-    
-    return os.path.join(base_path, relative_path)

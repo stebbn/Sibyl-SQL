@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
 import modules.DataSQL as data
-
+from modules.appFileHandler import resource_path
 from modules.utils import center_window, play_sound
 from ui.Pages.StudentDataWindow import StudentFormDialog
 
@@ -41,9 +41,9 @@ class DataPageFrame(QWidget):
             "ID No."        : "id_number", 
             "First Name"    : "first_name", 
             "Last Name"     : "last_name", 
-            "Program"       : "year_level",
-            "Year"          : "gender", 
-            "Gender"        : "program_code"
+            "Program"       : "program_code",
+            "Year"          : "year_level", 
+            "Gender"        : "gender"
         }
 
         self.sort_column_name = "ID No." 
@@ -68,7 +68,6 @@ class DataPageFrame(QWidget):
        
         self.search_field = QComboBox()
         self.search_field.addItems(["ID No.", "First Name", "Last Name", "Program", "Year", "Gender"])
-        self.search_field.currentTextChanged.connect(self.update_list)
         self.search_field.setMaximumWidth(150)
         self.search_field.setMaximumHeight(32)
        
@@ -193,63 +192,6 @@ class DataPageFrame(QWidget):
         
         self.show_info(self.search_entry.text())
 
-    def switch_page(self, val):
-        val_edit = max(1, min(val, self.total_pages)) 
-        if self.current_page == val_edit : prettyPrint("same page"); return
-
-        self.current_page = val_edit
-        self.show_info(self.search_entry.text())  
-        self.load_page_buttons()
-    
-    def page_button_pressed(self, val):
-        assert(isinstance(val, str) or isinstance(val, int), "???")
-        if type(val) is str: 
-            if   val == "first": val = 1
-            elif val == "prev" : val = self.current_page - 1
-            elif val == "next" : val = self.current_page + 1
-            elif val == "last" : val = self.total_pages       # this sucks
-            else: prettyPrint(f"unknown str val: {val}"); return
-        
-        self.switch_page(val)
-        play_sound(data.resource_path("ui/Assets/Sounds/button_click.wav"))
-
-    def make_page_button(self, n):
-        page_b = QPushButton(str(n))
-        page_b.setObjectName("SelectionButton")
-        page_b.setFixedHeight(45)
-        page_b.setFixedWidth(40)
-        page_b.setStyleSheet("text-align: center;")
-        return page_b
-
-    def load_page_buttons(self):
-        if not getattr(self, "total_pages", None):
-            self.total_pages = 1
-
-        chunk = ((self.current_page - 1) // self.max_page_ye) * self.max_page_ye + 1
-
-        if (getattr(self, "page_offset", None) != chunk) or (getattr(self, "last_total_pages", None) != self.total_pages):
-            
-            for button in self.page_button_group.buttons():
-                self.page_button_group.removeButton(button)
-                self.page_button_layout.removeWidget(button)
-                button.deleteLater()
-            
-            self.page_offset = chunk   
-            self.last_total_pages = self.total_pages
-            
-            chunk_end = min(self.total_pages, chunk + self.max_page_ye - 1)
-       
-            for page_count in range(chunk, chunk_end + 1):
-                btn = self.make_page_button(page_count)
-                btn.setCheckable(True)
-
-                self.page_button_layout.addWidget(btn)
-                self.page_button_group.addButton(btn, id=page_count)
-
-        active_btn = self.page_button_group.button(self.current_page)
-        if active_btn:
-            active_btn.setChecked(True)
-    
     def clear_search(self):
         self.search_entry.clear()
         self.search_field.setCurrentIndex(0)
@@ -319,7 +261,8 @@ class DataPageFrame(QWidget):
                                         search          = search_query, 
                                         search_field    = filtered_field, 
                                         page            = self.current_page, 
-                                        sort            = self.sort_columns_map.get(self.sort_column_name)
+                                        sort            = self.sort_columns_map.get(self.sort_column_name),
+                                        asc             = not self.reverse_sort
                                     )
         self.tree.setRowCount(0)
         self.load_page_buttons()
@@ -372,11 +315,10 @@ class DataPageFrame(QWidget):
                 self.tree.setItem(row, 4, year_item)
                 self.tree.setItem(row, 5, gender_item)
         
-        self.status_label.setText(f"Total Students: {data.db._get_table_val("students", "Total")} | Total Pages: {self.total_pages}")
+        self.status_label.setText(f"Total Students: {data.db._get_table_val("students", "Total")} | Current Pages: {self.total_pages}")
 
         prettyPrint(f"Added {self.tree.rowCount()} rows to table")
-        self.sort_column(self.current_sort, self.reverse_sort)
- 
+        
     def show_context_menu(self, position):
         item = self.tree.itemAt(position)
         if item:
@@ -385,32 +327,6 @@ class DataPageFrame(QWidget):
             menu.addAction("Edit Student", self.edit_student)
             menu.addAction("Delete Student", self.delete_student)
             menu.exec(self.tree.mapToGlobal(position))
-    
-    def sort_column(self, col, reverse):
-        row_data_list = []
-        for row in range(self.tree.rowCount()):
-            current_row_items = []
-            for col_idx in range(self.tree.columnCount()):
-                item = self.tree.item(row, col_idx)
-                current_row_items.append(item.clone() if item else QTableWidgetItem(""))
-            row_data_list.append(current_row_items)
-
-        try:
-            row_data_list.sort(
-                key=lambda items: int(items[col].text().split('-')[0]) if '-' in items[col].text() else int(items[col].text()), 
-                reverse=reverse
-            )
-        except (ValueError, IndexError):
-            row_data_list.sort(key=lambda items: items[col].text().lower(), reverse=reverse)
-            
-        self.tree.setRowCount(0)
-        for new_row, items in enumerate(row_data_list):
-            self.tree.insertRow(new_row)
-            for col_idx, item in enumerate(items):
-                self.tree.setItem(new_row, col_idx, item)
-        
-        self.current_sort = col
-        self.reverse_sort = reverse
     
     def open_add_student_window(self):
         dialog = StudentFormDialog(self)
@@ -447,16 +363,86 @@ class DataPageFrame(QWidget):
         else:
             prettyPrint("did not select anything")
     
+    
+    def switch_page(self, val):
+        val_edit = max(1, min(val, self.total_pages)) 
+        if self.current_page == val_edit : prettyPrint("same page"); return
+
+        self.current_page = val_edit
+        self.show_info(self.search_entry.text())  
+        self.load_page_buttons()
+    
+    def page_button_pressed(self, val):
+        assert(isinstance(val, str) or isinstance(val, int), "???")
+        if type(val) is str: 
+            if   val == "first": val = 1
+            elif val == "prev" : val = self.current_page - 1
+            elif val == "next" : val = self.current_page + 1
+            elif val == "last" : val = self.total_pages       # this sucks
+            else: prettyPrint(f"unknown str val: {val}"); return
+        
+        self.switch_page(val)
+        play_sound(resource_path("ui/Assets/Sounds/button_click.wav"))
+
+    def make_page_button(self, n):
+        page_b = QPushButton(str(n))
+        page_b.setObjectName("SelectionButton")
+        page_b.setFixedHeight(45)
+        page_b.setFixedWidth(40)
+        page_b.setStyleSheet("text-align: center;")
+        return page_b
+
+    def load_page_buttons(self):
+        if not getattr(self, "total_pages", None):
+            self.total_pages = 1
+
+        chunk = ((self.current_page - 1) // self.max_page_ye) * self.max_page_ye + 1
+
+        if (getattr(self, "page_offset", None) != chunk) or (getattr(self, "last_total_pages", None) != self.total_pages):
+            
+            for button in self.page_button_group.buttons():
+                self.page_button_group.removeButton(button)
+                self.page_button_layout.removeWidget(button)
+                button.deleteLater()
+            
+            self.page_offset = chunk   
+            self.last_total_pages = self.total_pages
+            
+            chunk_end = min(self.total_pages, chunk + self.max_page_ye - 1)
+       
+            for page_count in range(chunk, chunk_end + 1):
+                btn = self.make_page_button(page_count)
+                btn.setCheckable(True)
+
+                self.page_button_layout.addWidget(btn)
+                self.page_button_group.addButton(btn, id=page_count)
+
+        active_btn = self.page_button_group.button(self.current_page)
+        if active_btn:
+            active_btn.setChecked(True)
+    
+    
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_Delete:
-            self.delete_student()
-        elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+        def handle_enter():
             if self.tree.currentRow() >= 0:
                 student_id = self.tree.item(self.tree.currentRow(), 0).text()
                 self.open_edit_student_window(student_id)
-        elif event.key() == Qt.Key.Key_N and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-            self.open_add_student_window()
-        elif event.key() == Qt.Key.Key_F and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-            self.search_entry.setFocus()
+            else:
+                self.update_list()
+
+        keybinds = {
+            Qt.Key.Key_Delete: self.delete_student,
+            Qt.Key.Key_Return: handle_enter,
+            Qt.Key.Key_Enter: handle_enter,
+            (Qt.Key.Key_N, Qt.KeyboardModifier.ControlModifier): self.open_add_student_window,
+            (Qt.Key.Key_F, Qt.KeyboardModifier.ControlModifier): self.search_entry.setFocus
+        }
+
+        combo = (event.key(), event.modifiers())
+      
+        if combo in keybinds:
+            keybinds[combo]()
+        elif event.key() in keybinds:
+            keybinds[event.key()]()
         else:
             super().keyPressEvent(event)

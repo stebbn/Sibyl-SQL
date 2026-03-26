@@ -5,7 +5,7 @@ import darkdetect
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from typing import Any, Dict
-from modules.DataSQL import resource_path
+from modules.appFileHandler import resource_path
 
 def prettyPrint(msg):
     print("[SETTINGS]:", msg)
@@ -22,11 +22,7 @@ class SettingsManager(QObject):
 
     DEFAULT_SETTINGS = {
         "theme": "Auto",  # Auto, Dark, Light
-        "auto_detect_theme": True,
-        "remember_window_size": True,
-        "language": "English",
-        "font_size": 10,
-        "show_student_grid": True,
+        "page_content_size": 50,
     }
     
     THEME_COLORS = {
@@ -92,6 +88,7 @@ class SettingsManager(QObject):
     def set(self, key: str, value: Any) -> None:
         self.settings[key] = value
         self.save_settings()
+        self.settings = self._load_settings()
     
     def set_theme(self, theme: str) -> bool:
         if theme not in ["Auto", "Dark", "Light"]:

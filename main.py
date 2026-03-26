@@ -10,7 +10,7 @@ import time
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
 from PyQt6.QtGui import QIcon
 
-from modules.DataSQL import resource_path
+from modules.appFileHandler import resource_path
 from modules.utils import center_window, get_style, play_sound
 from modules.Settings import get_settings
 
@@ -65,7 +65,6 @@ class SibylApp(QMainWindow):
         self.sidebar.update_selected(self.starter_page)
         
         self.settings.theme_changed.connect(self.apply_theme)
-        
         prettyPrint("Application initialized")
     
     def switch_page(self, page_name: str):
@@ -95,7 +94,7 @@ class SibylApp(QMainWindow):
             prettyPrint(f"Error switching to {page_name}: {e}")
             traceback.print_exc()
     
-    def apply_theme(self, theme_name: str = None):
+    def apply_theme(self):
         style = get_style()
         if style:
             QApplication.instance().setStyleSheet(style)
@@ -109,7 +108,7 @@ def main():
 
     window = SibylApp()
     window.show()
-    play_sound(resource_path("ui/Assets/Sounds/sibyl_start.wav"))
+    play_sound(resource_path("ui/Assets/Sounds/sibyl_start.wav"), volume = 0.05)
 
     prettyPrint(f"Init load took {time.perf_counter() - start_time:.4f} seconds.")
 
@@ -121,5 +120,3 @@ def except_hook(cls, exception, traceback):
 if __name__ == "__main__":
     sys.excepthook = except_hook
     main()
-
-# longest 6.9624s

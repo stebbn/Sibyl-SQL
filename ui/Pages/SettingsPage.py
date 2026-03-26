@@ -22,19 +22,39 @@ class SettingsPageFrame(QWidget):
         appearance_layout = QVBoxLayout()
 
         theme_layout = QHBoxLayout()
-        theme_label = QLabel("Theme:")
+        theme_label = QLabel("Preferrence:")
         theme_label.setMinimumWidth(50)
 
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["Auto", "Dark", "Light"])
         self.theme_combo.setCurrentText(self.settings.get("theme", "Auto"))
         self.theme_combo.setMaximumWidth(200)
-        self.theme_combo.currentTextChanged.connect(self.on_theme_changed)
         
+        self.theme_combo.currentTextChanged.connect(self.on_theme_changed)
+
+        theme_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         theme_layout.addWidget(theme_label)
         theme_layout.addWidget(self.theme_combo)
-        theme_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        page_layout = QHBoxLayout()
+        psize_label = QLabel("Page Rows Size:")
+        psize_label.setMinimumWidth(50)
+
+        self.page_size = QSpinBox(self)
+        self.page_size.setRange(5, 200)
+        self.page_size.setSingleStep(1)
+        self.page_size.setValue(self.settings.get("page_content_size", 50))
+        self.page_size.setMaximumHeight(35)
+        self.page_size.setMaximumWidth(100)
+
+        self.page_size.valueChanged.connect(self.on_page_size_changed)
+
+        page_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        page_layout.addWidget(psize_label)
+        page_layout.addWidget(self.page_size)
+
         appearance_layout.addLayout(theme_layout)
+        appearance_layout.addLayout(page_layout)
   
         appearance_group.setLayout(appearance_layout)
         main_layout.addWidget(appearance_group)
@@ -83,10 +103,10 @@ class SettingsPageFrame(QWidget):
     
     def on_MONEYY(self, state):
         QMessageBox.information(None, "Title", f"MONEY {'YAY' if state else "NO!!"}")
+
+    def on_page_size_changed(self, value):
+        self.settings.set("page_content_size", value)
   
-    def on_show_grid_changed(self, state):
-        self.settings.set("show_student_grid", self.show_grid_check.isChecked())
-    
     def reset_to_defaults(self):
         reply = QMessageBox.question(
             self,
