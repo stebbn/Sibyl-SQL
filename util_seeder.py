@@ -19,6 +19,14 @@ first_names_m = [
     "Richard","Robert","Ryan","Samuel","Scott","Sean","Sebastian","Simon","Spencer","Stephen",
     "Steven","Theo","Thomas","Timothy","Tristan","Tyler","Victor","Vincent","Walter","William",
     "Zachary"
+
+    "Aurelian","Alaric","Aldric","Altair","Arvid","Axton","Aziel","Bastien","Blaise","Bram",
+    "Cassian","Caius","Caspian","Corin","Cyprian","Darian","Daxton","Draven","Eryx","Evren",
+    "Ezren","Falk","Fenris","Galen","Gaius","Hale","Harlan","Icarus","Iskander","Jareth",
+    "Kael","Kaizen","Kairo","Kieran","Klaus","Leif","Lucien","Lior","Lucael","Mael",
+    "Marek","Mathis","Nikolai","Noctis","Orion","Osric","Phineas","Quill","Riven","Ronan",
+    "Rhydian","Soren","Sylas","Tarian","Theron","Tobias","Valen","Valerian","Vance","Viren",
+    "Wesker","Xavian","Xerxes","Yorick","Zephyr","Ziven","Zorion"
 ]
 
 first_names_f = [
@@ -35,6 +43,13 @@ first_names_f = [
     "Olivia","Paige","Patricia","Penelope","Rachel","Rebecca","Riley","Rose","Ruby","Samantha",
     "Sara","Savannah","Scarlett","Sienna","Sophia","Stella","Summer","Sydney","Taylor","Valerie",
     "Vanessa","Victoria","Violet","Zoe"
+
+    "Aeliana","Aeris","Althea","Amaris","Anya","Arcelia","Arden","Astra","Azura","Briseis",
+    "Calista","Celestia","Cerys","Cyra","Delphine","Eira","Elowen","Elara","Elysia","Ember",
+    "Eska","Evangeline","Faye","Freya","Illyria","Ione","Isolde","Kaida","Kaori","Kiyomi",
+    "Liora","Luneth","Lyra","Maelis","Mireille","Naia","Nerissa","Noelle","Nyx","Ophelia",
+    "Orianna","Rhea","Rosalind","Sable","Seraphina","Shiori","Solene","Sylvie","Thalia","Vesper",
+    "Virelle","Winry","Xanthe","Yuna","Zaria","Zinnia","Zyra"
 ]
 
 last_names = [
@@ -58,6 +73,10 @@ last_names = [
     "Thompson","Torres","Tucker","Turner","Vasquez","Wagner","Walker","Wallace","Walsh","Ward",
     "Washington","Watkins","Watson","Weaver","Webb","Weber","Wells","West","Wheeler","White",
     "Williams","Williamson","Willis","Wilson","Woods","Wright","Young"
+
+    "Ashford","Blackwood","Crowley","Dusk","Evernight","Frost","Graves","Hawthorne","Ironwood",
+    "Kingsley","Locke","Moonfall","Nightingale","Ravencrest","Storme","Thorne","Vale","Viremont",
+    "Winterborne","Zephyr","Drake","Wraith","Holloway","Cross","Voss","Strade","Nyx","Kaelith", "Kamado"
 ]
 
 
@@ -69,7 +88,6 @@ colleges = [
     ("CEBA", "College of Economics, Business and Accountancy"),
     ("CED", "College of Education"),
     ("CHS", "College of Health Sciences"),
-    ("DSC", "Demon Slayer Corps")
 ]
 
 programs = [
@@ -114,7 +132,6 @@ programs = [
     ("BSEd-TLE", "Bachelor of Secondary Education (TLE)", "CED"),
     ("BEEd-Eng", "Bachelor of Elementary Education (English)", "CED"),
     ("BSN", "Bachelor of Science in Nursing", "CHS"),
-    ("BSDM", "Bachelor in Demon Slaying", "DSC")
 ]
 
 def run_seeder(student_count):
@@ -124,9 +141,18 @@ def run_seeder(student_count):
 
     print(f"Generating {student_count} random students...")
     students_to_insert = []
+    year_list = {}
     
     for i in range(1, student_count + 1):
-        id_num = f"202{random.randint(3,6)}-{i:04d}" 
+        id_year = f"202{random.randint(3,6)}"
+        id_code = "0"
+        if not year_list.get(id_year):
+            year_list[id_year] = 1
+        
+        year_list[id_year] += 1
+        id_code = year_list[id_year]
+
+        id_num = f"{id_year}-{id_code:04d}" 
         is_male = random.choice([True, False])
         gender = "Male" if is_male else "Female"
         
@@ -152,4 +178,6 @@ def run_seeder(student_count):
         print(f"Database error during seed: {e}")
 
 if __name__ == "__main__":
-    run_seeder(20000)
+    run_seeder(random.randint(20000,30000))
+
+# only run once or it unassigns current ones

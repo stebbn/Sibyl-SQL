@@ -15,7 +15,7 @@ from modules.utils import center_window, get_style, play_sound
 from modules.Settings import get_settings
 
 from ui import SidebarFrame
-from ui.Pages import CollegeFinderFrame, DataPageFrame, SettingsPageFrame
+from ui.Pages import CollegeFinderFrame, DataPageFrame, SettingsPageFrame, StatsPageFrame
 
 def prettyPrint(msg: str):
     print("[Main]:", msg)
@@ -54,7 +54,7 @@ class SibylApp(QMainWindow):
             "College"   : CollegeFinderFrame,
             "Data"      : DataPageFrame,
             "Settings"  : SettingsPageFrame,
-            "Stats"     : None
+            "Stats"     : StatsPageFrame
         }
         
         self.current_page = None
@@ -82,7 +82,7 @@ class SibylApp(QMainWindow):
                 self.page_container_layout.addWidget(self.current_page)
                 self.current_page_name = page_name
                 
-                play_sound(resource_path("ui/Assets/Sounds/button_click2.wav"))
+                play_sound(resource_path("ui/Assets/Sounds/button_click2.wav"), volume=0.1)
                 prettyPrint(f"Switched to {page_name}")
             else:
                 if page_class:

@@ -7,7 +7,7 @@ import math
 import time
 
 from modules.Settings import get_settings
-from typing import Literal
+from typing import Literal, Union
 
 def prettyPrint(msg):
     print("[DATA]:", msg)
@@ -62,8 +62,7 @@ class DatabaseManager:
         self.infos["colleges"]["Pages"] = self._calculate_pages("colleges")
         self.infos["programs"]["Pages"] = self._calculate_pages("programs")
 
-
-    def _get_pages(self, table):
+    def _get_pages(self, table : str) -> int:
         tables = self.infos.get(table)
         value = tables.get("Pages")
 
@@ -71,17 +70,21 @@ class DatabaseManager:
         prettyPrint(f"get pages error: {table}, {tables} {value}")
         return None
     
-    def _get_table_val(self, table, val):
+    def _get_table_val(self, table : str, val : str) -> int:
         table = self.infos.get(table)
         value = table.get(val)
         if table and value: return value
         prettyPrint(f"get error: {table}, {val}")
         return None
 
-    def _calculate_pages(self, table, search="", search_field=None):
+    def _calculate_pages(self, table : str, search="", search_field=None) -> int:
         try:
             with self._get_connection() as conn:
-                if search and search_field:
+
+                if table == "students" and search_field and search_field.lower() == "unassigned":
+                    query = "SELECT COUNT(*) FROM students WHERE program_code IS NULL OR TRIM(program_code) = ''"
+                    cursor = conn.execute(query)
+                elif search and search_field:
                     query = f"SELECT COUNT(*) FROM {table} WHERE {search_field} LIKE ?"
                     search_term = f"{search}%"
                     cursor = conn.execute(query, (search_term,))
@@ -91,7 +94,7 @@ class DatabaseManager:
                
                 total_count = int(cursor.fetchone()[0])
               
-                if not search:
+                if not search and not (search_field and search_field.lower() == "unassigned"):
                     self.infos[table]["Total"] = total_count
              
                 calculated_pages = math.ceil(total_count / self.settings_module.settings.get("page_content_size"))
@@ -101,7 +104,7 @@ class DatabaseManager:
             prettyPrint(f"Error calculating pages for {table}: {e}")
             return 1
 
-    def _get_connection(self):
+    def _get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA foreign_keys = ON;")
         conn.row_factory = sqlite3.Row 
@@ -118,7 +121,7 @@ class DatabaseManager:
             program_code TEXT PRIMARY KEY,
             program_name TEXT NOT NULL,
             college_code TEXT NOT NULL,
-            FOREIGN KEY (college_code) REFERENCES colleges (college_code) ON UPDATE CASCADE ON DELETE RESTRICT
+            FOREIGN KEY (college_code) REFERENCES colleges (college_code) ON UPDATE CASCADE ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS students (
@@ -137,7 +140,7 @@ class DatabaseManager:
         except Exception as e:
             prettyPrint(f"Error init database: {e}")
 
-    def query_students(self, search="", search_field="id_number", page=1, sort="id_number", asc=True):
+    def query_students(self, search="", search_field="id_number", page=1, sort="id_number", asc=True) -> list[dict]:
         start_time = time.perf_counter()
 
         try:
@@ -145,30 +148,44 @@ class DatabaseManager:
                 max_page = self.settings_module.settings.get("page_content_size")
                 offset   = (page - 1) * max_page
                 sort_dir = "ASC" if asc else "DESC"
-
-                search_term = f"{search}%"
               
                 search_max_page = self._calculate_pages("students", search, search_field)
                 self.infos["students"]["Pages"] = search_max_page
 
-                cursor = conn.execute(f"""
-                                        SELECT id_number, first_name, last_name, year_level, gender, program_code 
-                                        FROM students
-                                        WHERE {search_field} LIKE ?
-                                        ORDER BY {sort} {sort_dir}
-                                        LIMIT ? OFFSET ?
-                                        """,
-                                        (search_term, max_page, offset) 
-                                     )
+                if search_field and search_field.lower() == "unassigned":
+                    where = "WHERE program_code IS NULL OR TRIM(program_code) = ''"
+                    query_params = (max_page, offset)
+                    queued_search = "N/A (Unassigned Filter)"
+            
+                elif search and search_field:
+                    where = f"WHERE {search_field} LIKE ?"
+                    search_term = f"{search}%"
+                    query_params = (search_term, max_page, offset)
+                    queued_search = search_term
+             
+                else:
+                    where = ""
+                    query_params = (max_page, offset)
+                    queued_search = "None"
 
-                prettyPrint(f"queued: {search_term}, {search_field}, {page}, {sort}, {sort_dir} | time: {time.perf_counter() - start_time}")
+                query = f"""
+                    SELECT id_number, first_name, last_name, year_level, gender, program_code 
+                    FROM students
+                    {where}
+                    ORDER BY {sort} {sort_dir}
+                    LIMIT ? OFFSET ?
+                """
+                
+                cursor = conn.execute(query, query_params)
+
+                prettyPrint(f"queued: {queued_search}, {search_field}, {page}, {sort}, {sort_dir} | time: {time.perf_counter() - start_time}")
                 return [dict(row) for row in cursor.fetchall()], search_max_page
                 
         except Exception as e:
             prettyPrint(f"Error fetching students: {e}")
             return [], 1
 
-    def query_college(self):
+    def query_college(self) -> list[dict]:
         try:
             with self._get_connection() as conn:
                 cursor = conn.execute("SELECT college_code, college_name FROM colleges")
@@ -177,7 +194,7 @@ class DatabaseManager:
             prettyPrint(f"Error fetching colleges: {e}")
             return []
 
-    def query_programs(self):
+    def query_programs(self) -> list[dict]:
         try:
             with self._get_connection() as conn:
                 cursor = conn.execute("SELECT program_code, program_name, college_code FROM programs")
@@ -313,7 +330,30 @@ def EditProgram(p_code: str, new_data_list : list) -> bool:
         prettyPrint(f"Error editing program: {e}")
         return False
 
-# Delete datas ---------------------------------------------------------------------
+# Delete datas ---------------------------------------------------------------------    
+
+def checkCollegeDelete(code: str) -> list[Union[int,int]]:
+    query = """
+        SELECT program_code
+        FROM programs
+        WHERE UPPER(college_code) = ?
+    """
+    try:
+        with db._get_connection() as conn:
+            cursor = conn.execute(query, (code.upper(),))
+            results = cursor.fetchall()
+            
+            program_codes = [row['program_code'] for row in results]
+            
+            if len(program_codes) == 0:
+                prettyPrint(f"can safely delete {code}")
+                return True
+            else:
+                return [len(program_codes), get_students_in_program(program_codes)]
+                
+    except Exception as e:
+        prettyPrint(f"Error checking safe college: {e}")
+        return f"error: [{e}]"
 
 def DeleteCollege(code: str) -> bool:
     try:
@@ -350,7 +390,60 @@ def DeleteStudent(sid: str) -> bool:
 
 # ------------------------- retrieve stuff ----------------------------------------- #
 
-def get_college_by_program(program_code: str) -> str:
+def get_students_in_program(program_codes: tuple | list) -> int:
+    qmarks = ", ".join(["?"] * len(program_codes))
+    query = f"""
+                SELECT COUNT(id_number)
+                FROM students
+                WHERE UPPER(program_code) IN ({qmarks})
+            """
+    try:
+        with db._get_connection() as conn:
+            codelist = tuple(str(code).strip().upper() for code in program_codes)
+        
+            cursor = conn.execute(query, codelist)
+            count = int(cursor.fetchone()[0]) 
+            
+            prettyPrint(f"total students affected by {codelist}: {count}")
+            return count
+            
+    except Exception as e:
+        prettyPrint(f"Error checking affected students: {e}")
+        return f"error: [{e}]"
+
+def get_college_name(college_code : str) -> str:
+    college_code = college_code.upper()
+    
+    query = """
+        SELECT college_name 
+        FROM colleges
+        WHERE college_code = ?
+    """
+    try:
+        with db._get_connection() as conn:
+            cursor = conn.execute(query, (college_code,))
+            result = cursor.fetchone()[0]
+            if result:
+                return result
+    except Exception as e:
+        prettyPrint(e)
+
+def get_colleges() -> list:
+    query = """
+        SELECT college_code
+        FROM colleges
+        ORDER BY college_code ASC
+    """
+    try:
+        with db._get_connection() as conn:
+            cursor = conn.execute(query)
+            return [row["college_code"] for row in cursor.fetchall()]
+
+    except Exception as e:
+        prettyPrint(f"tried getting colleges: {e}")
+
+
+def get_college_by_program(program_code : str) -> str:
     code = format_college_prog(program_code)
     if not code: 
         return "invalid program code"
@@ -371,7 +464,7 @@ def get_college_by_program(program_code: str) -> str:
         prettyPrint(f"Error getting college: {e}")
     return "College Not Found"
 
-def GetProgramDetails(program_code: str) -> dict | bool:
+def GetProgramDetails(program_code : str) -> dict | bool:
     query = """
         SELECT p.program_name, c.college_name 
         FROM programs p

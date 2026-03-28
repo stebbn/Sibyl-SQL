@@ -13,9 +13,8 @@ def generate_stylesheet():
     accent          = colors["accent"]
     border          = colors["border"]
   
-    is_dark         = settings.current_theme == "Dark"
-    text_color      = "#FFFFFF" if is_dark else "#1A1919"
-    secondary_text  = "#050303" if is_dark else "#555555"
+    text_color      = colors["text_color"]
+    secondary_text  = colors["secondary_text"]
     
     stylesheet = f"""
 

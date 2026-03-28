@@ -6,6 +6,9 @@ from PyQt6.QtGui import QColor
 
 import modules.DataSQL as data
 
+from modules.appFileHandler import resource_path
+from modules.utils import play_sound
+
 def prettyPrint(msg: str): 
     print("[COLLEGE_PAGE]:", msg)
 
@@ -47,22 +50,25 @@ class CollegeTab(QWidget):
         search_layout.setSpacing(5)
         search_layout.addWidget(QLabel("Search:"))
 
-        self.search_var = ""
         self.search_entry = QLineEdit()
         
         search_btn = QPushButton("Search")
         search_btn.setObjectName("SelectionButton")
         search_btn.clicked.connect(self.refresh)
 
+        clear_buton = QPushButton("Clear")
+        clear_buton.setObjectName("SelectionButton")
+        clear_buton.clicked.connect(self.on_clear)
+
         add_btn = QPushButton("+")
         add_btn.setObjectName("SelectionButton")
         add_btn.clicked.connect(lambda: self.open_editor())
 
         toolbar_layout.addLayout(search_layout, 1)
-
         search_layout.addWidget(self.search_entry)
 
         toolbar_layout.addWidget(search_btn)
+        toolbar_layout.addWidget(clear_buton)
         toolbar_layout.addWidget(add_btn)
         
         layout.addWidget(toolbar_container)
@@ -86,8 +92,9 @@ class CollegeTab(QWidget):
         
         self.refresh()
     
-    def on_search_changed(self, text):
-        self.search_var = text
+    def on_clear(self):
+        self.search_entry.clear()
+        self.refresh()
     
     def on_cell_double_clicked(self, row, col):
         if row >= 0:
@@ -105,12 +112,18 @@ class CollegeTab(QWidget):
         self.tree.setRowCount(0)
         self.update_data()
         
+        search_term = self.search_entry.text().strip().lower()
+        
         for college in self.data:
-            row = self.tree.rowCount()
-            self.tree.insertRow(row)
-
             code = str(college["college_code"])  
             name = str(college["college_name"])
+  
+            if search_term:
+                if search_term not in code.lower() and search_term not in name.lower():
+                    continue
+            
+            row = self.tree.rowCount()
+            self.tree.insertRow(row)
             
             item_code = QTableWidgetItem(code)
             item_name = QTableWidgetItem(name)
@@ -136,9 +149,24 @@ class CollegeTab(QWidget):
         row = self.tree.currentRow()
         if row >= 0:
             code = self.tree.item(row, 0).text()
-            reply = QMessageBox.question(self, "Confirm Delete", 
-                                       f"Delete college {code}?",
-                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            
+            safe_del = data.checkCollegeDelete(code)
+            college_format = f"{code} | {data.get_college_name(code)}"
+
+            if row >= 0:
+
+                msg =  f"Delete College ({college_format})?" 
+                choices = QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+
+                if (safe_del != True) and type(safe_del) == list:
+                    msg = f"Deleting College ({college_format}) will result into removing {safe_del[0]} programs and unassign {safe_del[1]} students." 
+                elif (safe_del != True) and type(safe_del) != list:
+                    msg = f"{safe_del}"
+                    choices = QMessageBox.StandardButton.Ok
+
+                play_sound(resource_path("ui/Assets/Sounds/error.wav"), volume = 0.2)
+                reply = QMessageBox.question(self, "Confirm Delete", msg, choices)
+
             if reply == QMessageBox.StandardButton.Yes:
                 data.DeleteCollege(code)
                 self.refresh()
@@ -152,7 +180,7 @@ class ProgramTab(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.data = data.db.query_programs()
+        self.get_data()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 3, 0, 0)
@@ -167,15 +195,17 @@ class ProgramTab(QWidget):
         search_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         search_layout.setSpacing(5)
         search_layout.addWidget(QLabel("Search:"))
-        
-        self.search_var = ""
+    
         self.search_entry = QLineEdit()
-        self.search_entry.textChanged.connect(self.on_search_changed)
         
         search_btn = QPushButton("Search")
         search_btn.setObjectName("SelectionButton")
         search_btn.clicked.connect(self.refresh)
         
+        clear_buton = QPushButton("Clear")
+        clear_buton.setObjectName("SelectionButton")
+        clear_buton.clicked.connect(self.on_clear)
+
         add_btn = QPushButton("+")
         add_btn.setObjectName("SelectionButton")
         add_btn.clicked.connect(lambda: self.open_editor())
@@ -184,6 +214,7 @@ class ProgramTab(QWidget):
         search_layout.addWidget(self.search_entry)
 
         toolbar_layout.addWidget(search_btn)
+        toolbar_layout.addWidget(clear_buton)
         toolbar_layout.addWidget(add_btn)
         
         layout.addWidget(toolbar_container)
@@ -193,12 +224,12 @@ class ProgramTab(QWidget):
         self.tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
-
         self.tree.setHorizontalHeaderLabels(["Code", "Program Name", "College"])
         self.tree.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.tree.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.tree.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+
         self.tree.customContextMenuRequested.connect(self.show_menu)
         self.tree.cellDoubleClicked.connect(self.on_cell_double_clicked)
         
@@ -209,23 +240,36 @@ class ProgramTab(QWidget):
         
         self.refresh()
     
-    def on_search_changed(self, text):
-        self.search_var = text
+    def on_clear(self):
+        self.search_entry.clear()
+        self.refresh()
     
     def on_cell_double_clicked(self, row, col):
         if row >= 0:
             self.edit_selected()
     
+    def get_data(self):
+        self.data = data.db.query_programs()
+
     def refresh(self):
         self.tree.setRowCount(0)
+        self.get_data()
+
+        search_term = self.search_entry.text().strip().lower()
         
         for program in self.data:
-            row = self.tree.rowCount()
-            self.tree.insertRow(row)
-
             code = str(program["program_code"])
             name = str(program["program_name"])
             col_code = str(program["college_code"])
+        
+            if search_term:
+                if (search_term not in code.lower() and 
+                    search_term not in name.lower() and 
+                    search_term not in col_code.lower()):
+                    continue
+            
+            row = self.tree.rowCount()
+            self.tree.insertRow(row)
             
             item_code = QTableWidgetItem(code)
             item_name = QTableWidgetItem(name)
@@ -254,9 +298,17 @@ class ProgramTab(QWidget):
         row = self.tree.currentRow()
         if row >= 0:
             code = self.tree.item(row, 0).text()
-            reply = QMessageBox.question(self, "Confirm Delete", 
-                                       f"Delete program {code}?",
+            affected_students = data.get_students_in_program((str(code),))
+
+            msg = f"Delete program {code}?"
+
+            if affected_students > 0:
+                msg = f"Deleting program: {code} is going to unassign {affected_students} students. Delete?"
+
+            play_sound(resource_path("ui/Assets/Sounds/error.wav"), volume = 0.2)
+            reply = QMessageBox.question(self, "Confirm Delete", msg,
                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
             if reply == QMessageBox.StandardButton.Yes:
                 data.DeleteProgram(code)
                 self.refresh()
@@ -315,7 +367,8 @@ class EditorWindow(QDialog):
             
             layout.addWidget(QLabel("College Code:"))
             self.college_input = QComboBox()
-            self.college_input.addItems(data.college_data.keys())
+            self.college_input.addItems(data.get_colleges())
+
             if self.is_edit:
                 index = self.college_input.findText(self.info.get("college_code", ""))
                 if index >= 0:

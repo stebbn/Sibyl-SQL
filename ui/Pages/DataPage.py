@@ -43,7 +43,8 @@ class DataPageFrame(QWidget):
             "Last Name"     : "last_name", 
             "Program"       : "program_code",
             "Year"          : "year_level", 
-            "Gender"        : "gender"
+            "Gender"        : "gender",
+            "Errors"        : "unassigned"
         }
 
         self.sort_column_name = "ID No." 
@@ -67,7 +68,7 @@ class DataPageFrame(QWidget):
         self.search_entry.setMaximumHeight(32)
        
         self.search_field = QComboBox()
-        self.search_field.addItems(["ID No.", "First Name", "Last Name", "Program", "Year", "Gender"])
+        self.search_field.addItems(["ID No.", "First Name", "Last Name", "Program", "Year", "Gender", "Errors"])
         self.search_field.setMaximumWidth(150)
         self.search_field.setMaximumHeight(32)
        
@@ -302,11 +303,7 @@ class DataPageFrame(QWidget):
                 if prog_stat == "invalid program code":
                     prettyPrint(f"warning: {student_id}")
                     for item in [id_item, first_name_item, last_name_item, program_item, year_item, gender_item]:
-                        item.setData(Qt.ItemDataRole.UserRole, "#DDD239")
-                elif prog_stat == "College Not Found":
-                    prettyPrint(f"error: {student_id}")
-                    for item in [id_item, first_name_item, last_name_item, program_item, year_item, gender_item]:
-                        item.setData(Qt.ItemDataRole.UserRole, "#DD3939")
+                        item.setData(Qt.ItemDataRole.UserRole, "#8F8823")
                     
                 self.tree.setItem(row, 0, id_item)
                 self.tree.setItem(row, 1, first_name_item)

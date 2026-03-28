@@ -27,18 +27,24 @@ class SettingsManager(QObject):
     
     THEME_COLORS = {
         "Dark": {
-            "background": "#131212",
-            "foreground": "#313131",
-            "accent": "rgba(100, 200, 255, 100)",
-            "secondary_bg": "#181717",
-            "border": "#242323",
+            "background"        : "#131212",
+            "foreground"        : "#313131",
+            "accent"            : "#64c8ff",
+            "secondary_bg"      : "#181717",
+            "border"            : "#242323",
+
+            "text_color"        : "#FFFFFF",
+            "secondary_text"    : "#050303"
         },
         "Light": {
-            "background": "#ECECEC",
-            "foreground": "#CECECE",
-            "accent": "rgba(70, 150, 220, 100)",
-            "secondary_bg": "#F5F5F5",
-            "border": "#BBB9B9",
+            "background"        : "#ECECEC",
+            "foreground"        : "#CECECE",
+            "accent"            : "#4696dc",
+            "secondary_bg"      : "#F5F5F5",
+            "border"            : "#BBB9B9",
+
+            "text_color"        : "#1A1919",
+            "secondary_text"    : "#555555"
         }
     }
     
