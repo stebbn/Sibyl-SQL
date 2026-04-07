@@ -312,7 +312,7 @@ class DataPageFrame(QWidget):
                 self.tree.setItem(row, 4, year_item)
                 self.tree.setItem(row, 5, gender_item)
         
-        self.status_label.setText(f"Total Students: {data.db._get_table_val("students", "Total")} | Current Pages: {self.total_pages}")
+        self.status_label.setText(f"""Total Students: {data.db._get_table_val("students", "Total")} | Current Pages: {self.total_pages} | Sorting: {self.sort_column_name} ({"Ascending" if not self.reverse_sort else "Descending"})""")
 
         prettyPrint(f"Added {self.tree.rowCount()} rows to table")
         

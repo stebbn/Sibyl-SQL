@@ -109,7 +109,7 @@ class SidebarFrame(QFrame):
             the_button.style().unpolish(the_button)
             the_button.style().polish(the_button)
         else:
-            prettyPrint(f"invalid button update {new}")
+            prettyPrint(f"invalid button update: '{new}' ")
             prettyPrint(self.nav_buttons)
     
     def handle_click(self, btn: QPushButton, page_name: str):

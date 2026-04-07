@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, 
-                             QPushButton, QGroupBox, QSpinBox, QCheckBox, QMessageBox)
+                             QPushButton, QGroupBox, QSpinBox, QCheckBox, QMessageBox, QSlider)
 from PyQt6.QtCore import Qt
 
 from modules.Settings import get_settings
@@ -27,7 +27,6 @@ class SettingsPageFrame(QWidget):
 
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["Auto", "Dark", "Light"])
-        self.theme_combo.setCurrentText(self.settings.get("theme", "Auto"))
         self.theme_combo.setMaximumWidth(200)
         
         self.theme_combo.currentTextChanged.connect(self.on_theme_changed)
@@ -43,7 +42,6 @@ class SettingsPageFrame(QWidget):
         self.page_size = QSpinBox(self)
         self.page_size.setRange(5, 200)
         self.page_size.setSingleStep(1)
-        self.page_size.setValue(self.settings.get("page_content_size", 50))
         self.page_size.setMaximumHeight(35)
         self.page_size.setMaximumWidth(100)
 
@@ -53,8 +51,30 @@ class SettingsPageFrame(QWidget):
         page_layout.addWidget(psize_label)
         page_layout.addWidget(self.page_size)
 
+        sound_layout = QHBoxLayout()
+        vol_label = QLabel("Volume:")
+        vol_label.setMinimumWidth(50)
+
+        self.vol_number = QLabel("0%")
+        self.vol_number.setMinimumWidth(40)
+        self.vol_number.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.volume = QSlider(Qt.Orientation.Horizontal)
+        self.volume.setRange(0,100)
+        self.volume.setMaximumWidth(250)
+
+        self.volume.valueChanged.connect(self.on_volume_changed)
+
+        sound_layout.addWidget(vol_label)
+        sound_layout.addWidget(self.vol_number)
+        sound_layout.addWidget(self.volume)
+        
+        sound_layout.addStretch()
+        sound_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+       
         appearance_layout.addLayout(theme_layout)
         appearance_layout.addLayout(page_layout)
+        appearance_layout.addLayout(sound_layout)
   
         appearance_group.setLayout(appearance_layout)
         main_layout.addWidget(appearance_group)
@@ -62,9 +82,8 @@ class SettingsPageFrame(QWidget):
         behavior_group = QGroupBox("Behavior")
         behavior_layout = QVBoxLayout()
 
-        self.show_grid_check = QCheckBox("enable million dollar giver in ur bank account") # still tryna look for ideas for settings
-        self.show_grid_check.setChecked(False)
-        self.show_grid_check.stateChanged.connect(self.on_MONEYY)
+        self.show_grid_check = QCheckBox("Remember Last Page") 
+        self.show_grid_check.checkStateChanged.connect(self.on_save_page)
 
         behavior_layout.addWidget(self.show_grid_check)
          
@@ -95,14 +114,26 @@ class SettingsPageFrame(QWidget):
         reset_btn.setObjectName("SelectionButton")
         reset_btn.clicked.connect(self.reset_to_defaults)
         button_layout.addWidget(reset_btn)
-        
+
+        self.setup_default_settings()
+
         main_layout.addLayout(button_layout)
+
+    def setup_default_settings(self):
+        self.theme_combo.setCurrentText(self.settings.get("theme"))
+        self.page_size.setValue(self.settings.get("page_content_size"))
+        self.volume.setValue(self.settings.get("sound_volume"))
+        self.show_grid_check.setChecked(self.settings.get("remember_last_page"))
     
     def on_theme_changed(self, theme: str):
        self.settings.set_theme(theme)
     
-    def on_MONEYY(self, state):
-        QMessageBox.information(None, "Title", f"MONEY {'YAY' if state else "NO!!"}")
+    def on_volume_changed(self, value):
+        self.settings.set("sound_volume", value)
+        self.vol_number.setText(f"{self.volume.value()}%")
+    
+    def on_save_page(self, state):
+        self.settings.set("remember_last_page", Qt.CheckState.Checked == state)
 
     def on_page_size_changed(self, value):
         self.settings.set("page_content_size", value)
@@ -120,13 +151,6 @@ class SettingsPageFrame(QWidget):
             self.settings.current_theme = self.settings._resolve_theme()
             self.settings.save_settings()
             
-            self.theme_combo.blockSignals(True)
-            self.theme_combo.setCurrentText(self.settings.get("theme", "Auto"))
-            self.theme_combo.blockSignals(False)
-            
-            self.font_spinbox.setValue(self.settings.get("font_size", 10))
-            self.auto_detect_check.setChecked(self.settings.get("auto_detect_theme", True))
-            self.remember_size_check.setChecked(self.settings.get("remember_window_size", True))
-            self.show_grid_check.setChecked(self.settings.get("show_student_grid", True))
+            self.setup_default_settings()
             
             QMessageBox.information(self, "Success", "Settings have been reset to defaults.")

@@ -6,6 +6,7 @@ from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtWidgets import QApplication
 
 from modules.Style import generate_stylesheet, get_theme
+from modules.Settings import get_settings
 
 def processImage(file_loc, w, h, dark_mode_invert=False) -> QPixmap:
     og_img = Image.open(file_loc)
@@ -22,10 +23,12 @@ def processImage(file_loc, w, h, dark_mode_invert=False) -> QPixmap:
     return QPixmap.fromImage(q_img)
 
 pygame.mixer.init() 
+settings = get_settings()
+
 def play_sound(path, volume = 1):
 
     sound_effect = pygame.mixer.Sound(path)
-    sound_effect.set_volume(volume)
+    sound_effect.set_volume(volume * (settings.get("sound_volume") / 50))
     sound_effect.play()
 
 def get_style() -> str:

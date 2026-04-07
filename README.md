@@ -1,86 +1,241 @@
 
 
-#  Sibyl
+# Sibyl - Student Information System
 
-> A Student Information System inspired by *Psycho-Pass*
-> Automatically adapts to your system's **Dark / Light mode**
+> A modern **Student Information System** inspired by *Psycho-Pass*, with seamless **Dark/Light** mode support and an intuitive management interface.
 
+---
 
 ## Overview
 
-**Sibyl** is a modern Student Information System built with a clean UI and system-based theme detection.
-It allows efficient management of students, colleges, and programs with right-click editing functionality and detailed database viewing.
+**Sibyl** is a powerful yet user-friendly Student Information System designed to streamline the management of student records, collegiate programs, and academic data. With system-aware theme detection, intuitive right-click editing, and comprehensive database views, Sibyl provides an elegant solution for educational data management.
 
+### Key Highlights
 
-## Theme
+✨ **Theme-Aware UI** — Automatically adapts to your system's Dark/Light mode preference  
+🎯 **Intuitive Interface** — Right-click context menus for quick record management  
+📊 **Comprehensive Views** — Multiple perspectives of student, college, and program data  
+🔧 **Easy Editing** — Inline editing with ID-based student lookup  
+🎨 **Modern Design** — Clean, professional interface built with modern Python UI libraries
 
-* Automatically follows your system’s **Dark / Light mode**
-* Styled UI using:
+## ✨ Features
 
-  * `sv-ttk`
-  * `darkdetect`
-  * `pywinstyles`
+### 👥 Student Management
+- **Add** new students with required information
+- **Edit** existing student records by ID number
+- **Delete** student entries with confirmation
+- Right-click context menu for quick access to edit/delete actions
 
-## 
-Dark Mode
-<img width="638" align="center" height="396" alt="Sibyl Dark Mode" src="https://github.com/user-attachments/assets/3b3888fd-0e66-44b0-beaf-b3b76af10d08" />
+### 🏫 College & Program Management
+- View comprehensive list of colleges with codes and full names
+- Add new colleges and programs via intuitive dialogs
+- Manage academic programs within each college
+- Right-click editing and deletion for colleges and programs
 
-<br clear="right"/>
+### 📈 Database & Analytics
+- View aggregated student statistics
+- Display complete student records in table format
+- Access detailed individual student information windows
+- Full CRUD operations (Create, Read, Update, Delete) on all records
 
-Light Mode
-<img width="638" align="center" height="396" alt="Sibyl Light Mode" src="https://github.com/user-attachments/assets/40cbc81f-2473-42d6-9ea3-f3d4e49417a5" />
+### 🎨 User Experience
+- **System Theme Detection** — Automatically follows OS dark/light mode preference
+- **Modern Styling** — Professional UI powered by PyQt6 with custom stylesheets
+- **Responsive Design** — Clean, intuitive layout across all pages
+- **Data Visualization** — Interactive charts and graphs using matplotlib
+- **Audio Feedback** — Sound effects for user interactions
+---
 
-<br clear="right"/>
+## 🚀 Quick Start
 
-## Features
+### Prerequisites
+- Python 3.8 or higher
+- Windows OS (currently optimized for Windows)
 
-### Student Page
+### Installation
 
-* Add new students by filling in required information
-* Edit students using their **ID Number**
-* Right-click to edit or delete student records
-
-
-### College Page
-
-* View list of colleges with:
-  * College Code
-  * Full College Name
-* Add new colleges via **+ button**
-* Manage Programs (same design as College tab)
-* Right-click to edit or delete colleges/programs
-
-
-###  Database Page
-
-* View total number of students
-* Display complete student records
-* In-depth individual student information view
-* Right-click to edit or delete entries
-
-
-##  Installation
-The app is already pre-built with the executable file given.
-
-Install the required dependencies:
-
+1. **Clone the repository:**
 ```bash
-pip install sv-ttk
-pip install darkdetect
-pip install pywinstyles
-pip install pillow
+git clone https://github.com/stebbn/Sibyl-SQL.git
+cd Sibyl-SQL
 ```
 
-Pyinstaller Installation:
+2. **Install dependencies:**
 ```bash
+pip install -r requirements.txt
+```
+
+3. **Run the application:**
+```bash
+python main.py
+```
+
+---
+
+## 🛠️ Building Standalone Executable
+
+To create a standalone `.exe` file using PyInstaller with minimal dependencies:
+
+**Windows (PowerShell or CMD):**
+```powershell
 pyinstaller -w -F `
---add-data "ui/Assets;ui/Assets" `
---add-data "data;data" `
--i "ui/Assets/APP_ICON.ico" `
--n "SYBL" main.py `
+  --add-data "ui/Assets;ui/Assets" `
+  --add-data "data;data" `
+  -i "ui/Assets/APP_ICON.ico" `
+  --hidden-import=PyQt6.QtCore `
+  --hidden-import=PyQt6.QtGui `
+  --hidden-import=PyQt6.QtWidgets `
+  --hidden-import=matplotlib.backends.backend_qtagg `
+  --hidden-import=darkdetect `
+  --hidden-import=PIL `
+  --hidden-import=pygame `
+  --exclude-module=numpy.testing `
+  --exclude-module=pytest `
+  --exclude-module=setuptools `
+  --exclude-module=pip `
+  -n "SYBL" main.py
 ```
 
-### Inspiration
+**Linux/Mac:**
+```bash
+pyinstaller -w -F \
+  --add-data "ui/Assets:ui/Assets" \
+  --add-data "data:data" \
+  --hidden-import=PyQt6.QtCore \
+  --hidden-import=PyQt6.QtGui \
+  --hidden-import=PyQt6.QtWidgets \
+  --hidden-import=matplotlib.backends.backend_qtagg \
+  --hidden-import=darkdetect \
+  --hidden-import=PIL \
+  --hidden-import=pygame \
+  --exclude-module=numpy.testing \
+  --exclude-module=pytest \
+  --exclude-module=setuptools \
+  --exclude-module=pip \
+  -n "SYBL" main.py
+```
 
-Inspired by the system and aesthetic of *Psycho-Pass*
-bringing structured order to student information management.
+### Build Options Explained:
+- **`-w`** — Hide console window
+- **`-F`** — One-file executable (vs bundled directory)
+- **`--add-data`** — Include assets and config files
+- **`-i`** — Set application icon
+- **`--hidden-import`** — Include modules not detected automatically
+- **`--exclude-module`** — Skip unnecessary modules to reduce size
+- **`-n`** — Output executable name
+
+The compiled executable will be in the `dist/` folder (~200-300MB depending on your system libraries).
+
+### Reduce Size Further:
+If you need a smaller executable, consider:
+```powershell
+# Add UPX compression (requires UPX installed)
+pyinstaller ... --upx-dir=C:\upx-4.0.2 ...
+```
+
+---
+
+```
+Sibyl-SQL/
+├── main.py                 # Application entry point
+├── README.md              # This file
+├── data/
+│   └── settings.json      # Configuration and settings
+├── modules/
+│   ├── appFileHandler.py  # File and data operations
+│   ├── DataSQL.py         # Database layer and queries
+│   ├── Settings.py        # Settings management
+│   ├── Style.py           # UI styling and theming
+│   └── utils.py           # Utility functions
+├── ui/
+│   ├── Sidebar.py         # Navigation sidebar
+│   ├── Pages/
+│   │   ├── CollegePage.py # College and program management
+│   │   ├── DataPage.py    # Database and analytics view
+│   │   ├── SettingsPage.py # Application settings
+│   │   ├── StatsPage.py   # Statistics dashboard
+│   │   └── StudentDataWindow.py # Student details view
+│   └── Assets/
+│       ├── APP_ICON.ico   # Application icon
+│       └── Sounds/        # Audio assets
+└── util_seeder.py         # Database seeding utility
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Component | Technology |
+|-----------|-----------|
+| **UI Framework** | PyQt6 |
+| **Database** | SQLite |
+| **Theme Detection** | `darkdetect` |
+| **Data Visualization** | `matplotlib` |
+| **Image Processing** | Pillow (PIL) |
+| **Audio** | pygame |
+| **Packaging** | PyInstaller |
+| **Language** | Python 3.8+ |
+
+---
+
+## ⚙️ Configuration
+
+Configuration settings are stored in `data/settings.json`. You can customize:
+- Application appearance and theming
+- Database connection parameters (if using external DB)
+- UI preferences and defaults
+- Other application-specific settings
+
+---
+
+## 📝 Usage
+
+1. **Launching the Application:**
+   - Run `python main.py` or execute the compiled executable
+   - The app automatically detects your system theme
+
+2. **Managing Students:**
+   - Navigate to the "Student" page
+   - Use the form to add new students
+   - Right-click on any student record to edit or delete
+
+3. **Managing Colleges & Programs:**
+   - Visit the "College" page
+   - Click **+** to add new colleges or programs
+   - Right-click for edit/delete options
+
+4. **Viewing Data:**
+   - Access the "Data" page for comprehensive database views
+   - Check the "Stats" page for aggregate statistics
+   - Use "Settings" to configure the application
+
+---
+
+## 🎨 Theming
+
+Sibyl automatically detects and applies your system's theme preference:
+
+- **Light Mode** — Clean, bright interface optimized for daytime use
+- **Dark Mode** — Easy on the eyes with dark backgrounds and light text
+
+No manual theme switching needed—the app adapts in real-time!
+
+---
+
+## 🌟 Inspiration
+
+Inspired by the systematic design and aesthetic of *Psycho-Pass*, Sibyl brings structure, order, and intelligent organization to student information management.
+
+---
+
+## 📄 License
+
+[Add your license here if applicable]
+
+---
+
+## 📞 Support
+
+For issues, suggestions, or contributions, please visit the [GitHub repository](https://github.com/stebbn/Sibyl-SQL).
+
+Happy managing! 🎓

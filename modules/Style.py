@@ -215,6 +215,21 @@ QTextEdit:focus {{
     padding: 5px;
 }}
 
+/* ----------------------- SLIDERS ----------------------- */
+QSlider::groove:horizontal {{
+    border: 1px solid {text_color};
+    height: 10px;
+    margin: 0px;
+}}
+
+QSlider::handle:horizontal {{
+    background-color: {accent};
+    border: 1px solid;
+    height: 40px;
+    width: 25px;
+    margin: -15px 0px;
+}}
+
 /* ----------------------- CHECKBOXES ----------------------- */
 QCheckBox {{
     color: {text_color};

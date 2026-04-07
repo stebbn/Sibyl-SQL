@@ -1,7 +1,6 @@
 # jarvis give me random people
 
 import random
-import sys 
 
 from modules.DataSQL import db
 
@@ -178,6 +177,7 @@ def run_seeder(student_count):
         print(f"Database error during seed: {e}")
 
 if __name__ == "__main__":
-    run_seeder(random.randint(20000,30000))
+    run_seeder(random.randint(300000,500000))
 
+# running on pre existing data will wipe all progs and college link of studentss!!!
 # only run once or it unassigns current ones

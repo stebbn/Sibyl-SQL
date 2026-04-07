@@ -58,11 +58,15 @@ class DatabaseManager:
         self._load_pages()
    
     def _load_pages(self):
+        """recalculated all pages"""
+
         self.infos["students"]["Pages"] = self._calculate_pages("students")
         self.infos["colleges"]["Pages"] = self._calculate_pages("colleges")
         self.infos["programs"]["Pages"] = self._calculate_pages("programs")
 
-    def _get_pages(self, table : str) -> int:
+    def _get_pages(self, table : Literal["students", "colleges", "programs"]) -> int:
+        """returns pages for table"""
+
         tables = self.infos.get(table)
         value = tables.get("Pages")
 
@@ -70,7 +74,7 @@ class DatabaseManager:
         prettyPrint(f"get pages error: {table}, {tables} {value}")
         return None
     
-    def _get_table_val(self, table : str, val : str) -> int:
+    def _get_table_val(self, table : Literal["students", "colleges", "programs"], val : Literal["Pages", "Total"]):
         table = self.infos.get(table)
         value = table.get(val)
         if table and value: return value
@@ -141,6 +145,8 @@ class DatabaseManager:
             prettyPrint(f"Error init database: {e}")
 
     def query_students(self, search="", search_field="id_number", page=1, sort="id_number", asc=True) -> list[dict]:
+        """default search function for students"""
+
         start_time = time.perf_counter()
 
         try:
@@ -186,6 +192,8 @@ class DatabaseManager:
             return [], 1
 
     def query_college(self) -> list[dict]:
+        """returns all colleges"""
+
         try:
             with self._get_connection() as conn:
                 cursor = conn.execute("SELECT college_code, college_name FROM colleges")
@@ -195,6 +203,8 @@ class DatabaseManager:
             return []
 
     def query_programs(self) -> list[dict]:
+        """returns all programs"""
+
         try:
             with self._get_connection() as conn:
                 cursor = conn.execute("SELECT program_code, program_name, college_code FROM programs")
@@ -209,6 +219,8 @@ db = DatabaseManager()
 #-----------------------------utils---------------------------------#
 
 def format_college_prog(code: str) -> bool | str:
+    """formats any given college code to how the system reads it. If dosent exist returns False"""
+
     code = code.strip().upper()
     try:
         with db._get_connection() as conn:
@@ -221,6 +233,8 @@ def format_college_prog(code: str) -> bool | str:
     return False
 
 def VerifyFormat(data_type : str, user_input : str, name : str) -> list[bool, str]:
+    """handles verification inputs for student data"""
+
     val = user_input.strip()
     student_format = dataFormat["Student"]
 
@@ -333,6 +347,8 @@ def EditProgram(p_code: str, new_data_list : list) -> bool:
 # Delete datas ---------------------------------------------------------------------    
 
 def checkCollegeDelete(code: str) -> list[Union[int,int]]:
+    """checks for programs under a college and if you can safely delete it"""
+
     query = """
         SELECT program_code
         FROM programs
@@ -391,6 +407,7 @@ def DeleteStudent(sid: str) -> bool:
 # ------------------------- retrieve stuff ----------------------------------------- #
 
 def get_students_in_program(program_codes: tuple | list) -> int:
+    
     qmarks = ", ".join(["?"] * len(program_codes))
     query = f"""
                 SELECT COUNT(id_number)

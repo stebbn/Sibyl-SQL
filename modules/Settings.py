@@ -23,6 +23,11 @@ class SettingsManager(QObject):
     DEFAULT_SETTINGS = {
         "theme": "Auto",  # Auto, Dark, Light
         "page_content_size": 50,
+
+        "sound_volume": 50,      
+
+        "default_startup_page": "Data",  
+        "remember_last_page": False      
     }
     
     THEME_COLORS = {
@@ -89,12 +94,14 @@ class SettingsManager(QObject):
             return False
     
     def get(self, key: str, default: Any = None) -> Any:
-        return self.settings.get(key, default)
+        return self.settings.get(key, self.DEFAULT_SETTINGS[key])
     
     def set(self, key: str, value: Any) -> None:
         self.settings[key] = value
         self.save_settings()
         self.settings = self._load_settings()
+
+        prettyPrint(f"set {key} to {value}")
     
     def set_theme(self, theme: str) -> bool:
         if theme not in ["Auto", "Dark", "Light"]:

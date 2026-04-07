@@ -59,13 +59,26 @@ class SibylApp(QMainWindow):
         
         self.current_page = None
         self.current_page_name = ""
-        self.starter_page = "Data"
+        self.starter_page = self.settings.get("default_startup_page")
       
         self.switch_page(self.starter_page)
         self.sidebar.update_selected(self.starter_page)
         
         self.settings.theme_changed.connect(self.apply_theme)
+
         prettyPrint("Application initialized")
+
+    def closeEvent(self, a0):
+        try:
+            if self.settings.get("remember_last_page"):
+                self.settings.set("default_startup_page", self.current_page_name)
+            else:
+                self.settings.set("default_startup_page", "Data")
+
+        except Exception as e:
+            prettyPrint(e)
+
+        return super().closeEvent(a0)
     
     def switch_page(self, page_name: str):
         try:
@@ -81,6 +94,10 @@ class SibylApp(QMainWindow):
                 self.current_page = page_class()
                 self.page_container_layout.addWidget(self.current_page)
                 self.current_page_name = page_name
+                
+                # Refresh stats page if it has changed data
+                if page_name == "Stats" and hasattr(self.current_page, 'refresh_stats'):
+                    self.current_page.refresh_stats()
                 
                 play_sound(resource_path("ui/Assets/Sounds/button_click2.wav"), volume=0.1)
                 prettyPrint(f"Switched to {page_name}")
@@ -108,8 +125,8 @@ def main():
 
     window = SibylApp()
     window.show()
-    play_sound(resource_path("ui/Assets/Sounds/sibyl_start.wav"), volume = 0.05)
 
+    play_sound(resource_path("ui/Assets/Sounds/sibyl_start.wav"), volume = 0.05)
     prettyPrint(f"Init load took {time.perf_counter() - start_time:.4f} seconds.")
 
     sys.exit(app.exec())

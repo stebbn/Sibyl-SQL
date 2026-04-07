@@ -1,4 +1,7 @@
 {
   "theme": "Dark",
-  "page_content_size": 70
+  "page_content_size": 50,
+  "sound_volume": 40,
+  "default_startup_page": "Data",
+  "remember_last_page": true
 }
