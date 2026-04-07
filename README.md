@@ -72,69 +72,6 @@ python main.py
 
 ---
 
-## 🛠️ Building Standalone Executable
-
-To create a standalone `.exe` file using PyInstaller with minimal dependencies:
-
-**Windows (PowerShell or CMD):**
-```powershell
-pyinstaller -w -F `
-  --add-data "ui/Assets;ui/Assets" `
-  --add-data "data;data" `
-  -i "ui/Assets/APP_ICON.ico" `
-  --hidden-import=PyQt6.QtCore `
-  --hidden-import=PyQt6.QtGui `
-  --hidden-import=PyQt6.QtWidgets `
-  --hidden-import=matplotlib.backends.backend_qtagg `
-  --hidden-import=darkdetect `
-  --hidden-import=PIL `
-  --hidden-import=pygame `
-  --exclude-module=numpy.testing `
-  --exclude-module=pytest `
-  --exclude-module=setuptools `
-  --exclude-module=pip `
-  -n "SYBL" main.py
-```
-
-**Linux/Mac:**
-```bash
-pyinstaller -w -F \
-  --add-data "ui/Assets:ui/Assets" \
-  --add-data "data:data" \
-  --hidden-import=PyQt6.QtCore \
-  --hidden-import=PyQt6.QtGui \
-  --hidden-import=PyQt6.QtWidgets \
-  --hidden-import=matplotlib.backends.backend_qtagg \
-  --hidden-import=darkdetect \
-  --hidden-import=PIL \
-  --hidden-import=pygame \
-  --exclude-module=numpy.testing \
-  --exclude-module=pytest \
-  --exclude-module=setuptools \
-  --exclude-module=pip \
-  -n "SYBL" main.py
-```
-
-### Build Options Explained:
-- **`-w`** — Hide console window
-- **`-F`** — One-file executable (vs bundled directory)
-- **`--add-data`** — Include assets and config files
-- **`-i`** — Set application icon
-- **`--hidden-import`** — Include modules not detected automatically
-- **`--exclude-module`** — Skip unnecessary modules to reduce size
-- **`-n`** — Output executable name
-
-The compiled executable will be in the `dist/` folder (~200-300MB depending on your system libraries).
-
-### Reduce Size Further:
-If you need a smaller executable, consider:
-```powershell
-# Add UPX compression (requires UPX installed)
-pyinstaller ... --upx-dir=C:\upx-4.0.2 ...
-```
-
----
-
 ```
 Sibyl-SQL/
 ├── main.py                 # Application entry point
@@ -228,11 +165,6 @@ Inspired by the systematic design and aesthetic of *Psycho-Pass*, Sibyl brings s
 
 ---
 
-## 📄 License
-
-[Add your license here if applicable]
-
----
 
 ## 📞 Support
 
