@@ -8,6 +8,8 @@ from matplotlib.figure import Figure
 import modules.DataSQL as data
 from modules.Settings import get_settings
 
+import time
+
 def prettyPrint(msg: str):
     print("[STATS]:", msg)
 
@@ -32,32 +34,45 @@ class StatsPageFrame(QWidget):
         }
         
         try:
+            start = time.perf_counter()
             with db._get_connection() as conn:
-                data['total_students'] = conn.execute("SELECT COUNT(*) FROM students").fetchone()[0] or 0
+                totals = conn.execute("""
+                    SELECT 
+                        COUNT(*) as total_students,
+                        AVG(year_level) as avg_year
+                    FROM students
+                """).fetchone()
+                
+                data['total_students'] = totals[0] or 0
+                data['avg_year'] = round(totals[1], 1) if totals[1] else 0.0
                 data['total_programs'] = conn.execute("SELECT COUNT(*) FROM programs").fetchone()[0] or 0
                 
-                avg = conn.execute("SELECT AVG(year_level) FROM students").fetchone()[0]
-                data['avg_year'] = round(avg, 1) if avg else 0.0
-                
-                for row in conn.execute("SELECT gender, COUNT(*) FROM students GROUP BY gender"):
-                    gender = row['gender'] if row['gender'] else "Unspecified"
-                    data['genders'][gender] = row[1]
+                for row in conn.execute("""
+                    SELECT COALESCE(gender, 'Unspecified') as gender, COUNT(*) as count 
+                    FROM students 
+                    GROUP BY gender
+                """):
+                    data['genders'][row[0]] = row[1]
                
-                prog_query = """
-                    SELECT program_code, COUNT(*) 
+                for row in conn.execute("""
+                    SELECT COALESCE(program_code, 'Unassigned') as program_code, COUNT(*) as count
                     FROM students 
                     GROUP BY program_code 
                     ORDER BY COUNT(*) DESC 
                     LIMIT 15
-                """
-                for row in conn.execute(prog_query):
-                    prog = row['program_code'] if row['program_code'] else "Unassigned"
-                    data['programs'][prog] = row[1]
-             
-                for row in conn.execute("SELECT year_level, COUNT(*) FROM students GROUP BY year_level"):
-                    if row['year_level']:
-                        data['years'][row['year_level']] = row[1]
-                        
+                """):
+                    data['programs'][row[0]] = row[1]
+            
+                for row in conn.execute("""
+                    SELECT year_level, COUNT(*) as count 
+                    FROM students 
+                    WHERE year_level IS NOT NULL 
+                    GROUP BY year_level
+                """):
+                    if row[0]:
+                        data['years'][row[0]] = row[1]
+                prettyPrint(f"queue time: {time.perf_counter() - start}")
+
         except Exception as e:
             prettyPrint(f"stats error: {e}")
             
@@ -163,8 +178,14 @@ class StatsPageFrame(QWidget):
         ax         = fig.add_subplot(111)
         text_color = self.colors["text_color"]
         
-        ax.bar(categories, values, color=color)
-        
+        bars = ax.bar(categories, values, color=color)
+        total_bars = len(bars)
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height*0.85,
+                    f'{int(height)}',
+                    ha='center', va='bottom', color=text_color, fontweight='bold', fontsize=max(5.5, 70 / (total_bars + 3)))
+
         fig.patch.set_facecolor('none')
         ax.set_facecolor('none')
         
