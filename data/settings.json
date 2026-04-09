@@ -2,6 +2,6 @@
   "theme": "Dark",
   "page_content_size": 50,
   "sound_volume": 40,
-  "default_startup_page": "Data",
+  "default_startup_page": "Stats",
   "remember_last_page": true
 }
