@@ -12,6 +12,9 @@ from modules.utils import play_sound
 def prettyPrint(msg: str): 
     print("[COLLEGE_PAGE]:", msg)
 
+def throw_error(self, text, message, choices):
+    return QMessageBox.question(self, text, message, choices)
+
 class CollegeFinderFrame(QWidget):
     def __init__(self):
         super().__init__()
@@ -28,6 +31,12 @@ class CollegeFinderFrame(QWidget):
         self.notebook.addTab(self.tab_programs, "Programs")
         
         layout.addWidget(self.notebook)
+
+        self.notebook.tabBarClicked.connect(self.on_tab_click)
+
+    def on_tab_click(self):
+        self.tab_programs.refresh()
+        self.tab_colleges.refresh()
 
 class CollegeTab(QWidget):
     def __init__(self):
@@ -135,7 +144,6 @@ class CollegeTab(QWidget):
         menu = QMenu(self)
         menu.addAction("Edit", self.edit_selected)
         menu.addAction("Delete", self.delete_selected)
-        menu.addAction("Add New", lambda: self.open_editor())
         menu.exec(self.tree.mapToGlobal(position))
     
     def edit_selected(self):
@@ -165,11 +173,12 @@ class CollegeTab(QWidget):
                     choices = QMessageBox.StandardButton.Ok
 
                 play_sound(resource_path("ui/Assets/Sounds/error.wav"), volume = 0.2)
-                reply = QMessageBox.question(self, "Confirm Delete", msg, choices)
+                reply = throw_error(self, "Confirm Delete", msg, choices)
 
             if reply == QMessageBox.StandardButton.Yes:
                 data.DeleteCollege(code)
                 self.refresh()
+                
     
     def open_editor(self, info=None):
         editor = EditorWindow(self, "college", info)
@@ -283,7 +292,6 @@ class ProgramTab(QWidget):
         menu = QMenu(self)
         menu.addAction("Edit", self.edit_selected)
         menu.addAction("Delete", self.delete_selected)
-        menu.addAction("Add New", lambda: self.open_editor())
         menu.exec(self.tree.mapToGlobal(position))
     
     def edit_selected(self):
@@ -306,8 +314,7 @@ class ProgramTab(QWidget):
                 msg = f"Deleting program: {code} is going to unassign {affected_students} students. Delete?"
 
             play_sound(resource_path("ui/Assets/Sounds/error.wav"), volume = 0.2)
-            reply = QMessageBox.question(self, "Confirm Delete", msg,
-                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            reply = throw_error(self, "Confirm Delete", msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
             if reply == QMessageBox.StandardButton.Yes:
                 data.DeleteProgram(code)
@@ -400,19 +407,23 @@ class EditorWindow(QDialog):
             
             if self.mode == "college":
                 if self.is_edit:
-                    data.EditCollege(code, name)
+                    result, error = data.EditCollege(code, name)
+                    if not result: throw_error(self, "Save Error", error, QMessageBox.StandardButton.Ok)
                 else:
-                    data.AddCollege([code, name])
+                    result, error = data.AddCollege([code, name])
+                    if not result: throw_error(self, "Save Error", error, QMessageBox.StandardButton.Ok)
             
             elif self.mode == "program":
                 college = self.college_input.currentText()
                 if self.is_edit:
-                    data.EditProgram(code, [code, name, college])
+                    result, error = data.EditProgram(code, [code, name, college])
+                    if not result: throw_error(self, "Save Error", error, QMessageBox.StandardButton.Ok)
                 else:
-                    data.AddProgram([code, name, college])
+                    result, error = data.AddProgram([code, name, college])
+                    if not result: throw_error(self, "Save Error", error, QMessageBox.StandardButton.Ok)
             
             self.parent.refresh()
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save: {str(e)}")
             prettyPrint(f"Error: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to save: {str(e)}")

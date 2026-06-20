@@ -1,7 +1,7 @@
 {
-  "theme": "Dark",
+  "theme": "Auto",
   "page_content_size": 50,
-  "sound_volume": 40,
-  "default_startup_page": "Stats",
+  "sound_volume": 29,
+  "default_startup_page": "College",
   "remember_last_page": true
 }

@@ -59,7 +59,7 @@ class SibylApp(QMainWindow):
         
         self.current_page = None
         self.current_page_name = ""
-        self.starter_page = self.settings.get("default_startup_page")
+        self.starter_page = self.settings.get("default_startup_page") or "Data"
       
         self.switch_page(self.starter_page)
         self.sidebar.update_selected(self.starter_page)
@@ -129,7 +129,7 @@ def main():
     play_sound(resource_path("ui/Assets/Sounds/sibyl_start.wav"), volume = 0.05)
     prettyPrint(f"Init load took {time.perf_counter() - start_time:.4f} seconds.")
 
-    sys.exit(app.exec())
+    sys.exit(app.exec())    
 
 def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)

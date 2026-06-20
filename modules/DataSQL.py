@@ -281,7 +281,11 @@ def AddStudent(data_list) -> bool:
         return True
     except Exception as e:
         prettyPrint(f"Error adding student: {e}")
-        return False
+        return False, f"{e}"
+
+styled_error = {
+
+}
 
 def AddCollege(data_list) -> bool:
     query = "INSERT INTO colleges (college_code, college_name) VALUES (?, ?)"
@@ -290,10 +294,17 @@ def AddCollege(data_list) -> bool:
         with db._get_connection() as conn:
             conn.execute(query, (code, data_list[1]))
         prettyPrint(f"Adding College: {code}")
-        return True
+        return True, "success"
+    except sqlite3.IntegrityError as e:
+        styled_error = ""
+        if "college.college_code" in str(e) or "college" in str(e):
+            styled_error = "That college code address is already registered. Please try another."
+        else:
+            styled_error = "A database conflict occurred. Please check your inputs."
+        return False, f"{styled_error}"
     except Exception as e:
         prettyPrint(f"Error adding college: {e}")
-        return False
+        return False, f"{e}"
 
 def AddProgram(data_list) -> bool:
     query = "INSERT INTO programs (program_code, program_name, college_code) VALUES (?, ?, ?)"
@@ -303,10 +314,17 @@ def AddProgram(data_list) -> bool:
         with db._get_connection() as conn:
             conn.execute(query, (p_code, data_list[1], c_code))
         prettyPrint(f"Adding Program: {p_code}")
-        return True
+        return True, "success"
+    except sqlite3.IntegrityError as e:
+        styled_error = ""
+        if "programs.program_code" in str(e) or "programs" in str(e):
+            styled_error = "That program code address is already registered. Please try another."
+        else:
+            styled_error = f"A database conflict occurred. Please check your inputs. ({e})"
+        return False, f"{styled_error}"
     except Exception as e:
         prettyPrint(f"Error adding program: {e}")
-        return False
+        return False, f"{e}"
 
 # Edit datas -----------------------------------------------------------------------
 
@@ -319,30 +337,30 @@ def EditStudent(sid: str, new_data_list : list) -> bool:
     try:
         with db._get_connection() as conn:
             conn.execute(query, (new_data_list[0], new_data_list[1], new_data_list[2], new_data_list[3], int(new_data_list[4]), new_data_list[5], sid))
-        return True
+        return True, "success"
     except Exception as e:
         prettyPrint(f"Error editing student: {e}")
-        return False
+        return False, f"{e}"
 
 def EditCollege(code: str, new_name: str) -> bool:
     query = "UPDATE colleges SET college_name = ? WHERE UPPER(college_code) = ?"
     try:
         with db._get_connection() as conn:
             conn.execute(query, (new_name, code.upper()))
-        return True
+        return True, "success"
     except Exception as e:
         prettyPrint(f"Error editing college: {e}")
-        return False
+        return False, f"{e}"
 
 def EditProgram(p_code: str, new_data_list : list) -> bool:
     query = "UPDATE programs SET program_name = ?, college_code = ? WHERE UPPER(program_code) = ?"
     try:
         with db._get_connection() as conn:
-            conn.execute(query, (new_data_list[0], new_data_list[1].upper(), p_code.upper()))
-        return True
+            conn.execute(query, (new_data_list[1], new_data_list[2].upper(), p_code.upper().strip()))
+        return True, "success"
     except Exception as e:
-        prettyPrint(f"Error editing program: {e}")
-        return False
+        prettyPrint(f"Error editing program: {e} | {p_code} | {new_data_list}")
+        return False, f"{e}"
 
 # Delete datas ---------------------------------------------------------------------    
 
@@ -380,7 +398,7 @@ def DeleteCollege(code: str) -> bool:
             return False
     except Exception as e:
         prettyPrint(f"Error deleting college: {e}")
-        return False
+        return False, f"{e}"
 
 def DeleteProgram(p_code: str) -> bool:
     try:
@@ -391,7 +409,7 @@ def DeleteProgram(p_code: str) -> bool:
             return False
     except Exception as e:
         prettyPrint(f"Error deleting program: {e}")
-        return False
+        return False, f"{e}"
 
 def DeleteStudent(sid: str) -> bool:
     try:
@@ -402,7 +420,7 @@ def DeleteStudent(sid: str) -> bool:
             return False
     except Exception as e:
         prettyPrint(f"Error deleting student: {e}")
-        return False
+        return False, f"{e}"
 
 # ------------------------- retrieve stuff ----------------------------------------- #
 
