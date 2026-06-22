@@ -167,7 +167,7 @@ class CollegeTab(QWidget):
                 choices = QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
 
                 if (safe_del != True) and type(safe_del) == list:
-                    msg = f"Deleting College ({college_format}) will result into removing {safe_del[0]} programs and unassign {safe_del[1]} students." 
+                    msg = f"Deleting College ({college_format}) will result into unassigning {safe_del[0]} programs with {safe_del[1]} students." 
                 elif (safe_del != True) and type(safe_del) != list:
                     msg = f"{safe_del}"
                     choices = QMessageBox.StandardButton.Ok

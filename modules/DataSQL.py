@@ -124,8 +124,8 @@ class DatabaseManager:
         CREATE TABLE IF NOT EXISTS programs (
             program_code TEXT PRIMARY KEY,
             program_name TEXT NOT NULL,
-            college_code TEXT NOT NULL,
-            FOREIGN KEY (college_code) REFERENCES colleges (college_code) ON UPDATE CASCADE ON DELETE CASCADE
+            college_code TEXT,
+            FOREIGN KEY (college_code) REFERENCES colleges (college_code) ON UPDATE CASCADE ON DELETE SET NULL
         );
 
         CREATE TABLE IF NOT EXISTS students (
@@ -501,10 +501,10 @@ def get_college_by_program(program_code : str) -> str:
 
 def GetProgramDetails(program_code : str) -> dict | bool:
     query = """
-        SELECT p.program_name, c.college_name 
-        FROM programs p
-        JOIN colleges c ON p.college_code = c.college_code
-        WHERE UPPER(p.program_code) = ?
+     SELECT p.program_name, c.college_name 
+     FROM programs p
+     LEFT JOIN colleges c ON p.college_code = c.college_code
+     WHERE UPPER(p.program_code) = ?
     """
     try:
         with db._get_connection() as conn:
